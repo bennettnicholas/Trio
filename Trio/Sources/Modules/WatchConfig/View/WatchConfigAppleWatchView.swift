@@ -64,6 +64,34 @@ struct WatchConfigAppleWatchView: BaseView {
                 headerText: String(localized: "Apple Watch Configuration")
             )
 
+            SettingInputSection(
+                decimalValue: $decimalPlaceholder,
+                booleanValue: $state.exercisePromptWatch,
+                shouldDisplayHint: $shouldDisplayHint,
+                selectedVerboseHint: Binding(
+                    get: { selectedVerboseHint },
+                    set: {
+                        selectedVerboseHint = $0.map { AnyView($0) }
+                        hintLabel = String(localized: "Ask When Exercising")
+                    }
+                ),
+                units: state.units,
+                type: .boolean,
+                label: String(localized: "Ask When Exercising"),
+                miniHint: String(localized: "Apple Watch asks \"Are you exercising?\" when your heart rate stays high."),
+                verboseHint: VStack(alignment: .leading, spacing: 10) {
+                    Text("Default: OFF").bold()
+                    Text(
+                        "When this is on, the Trio Watch app reads the heart rate your Apple Watch already records. If it stays at 100 bpm or more for about 10 minutes, the watch asks \"Are you exercising?\" and lets you open temp targets or overrides. Nothing is changed unless you pick a preset."
+                    )
+                    Text(
+                        "The watch asks for Health access the next time you open the Trio Watch app. Checks run about 4 times an hour while a Trio complication is on your active watch face, and every time you open the Trio Watch app."
+                    )
+                    Text("When this is off, the Trio Watch app does not read heart rate.")
+                },
+                headerText: String(localized: "Apple Watch Configuration")
+            )
+
             Section(
                 header: Text("Contact Image"),
                 content: {

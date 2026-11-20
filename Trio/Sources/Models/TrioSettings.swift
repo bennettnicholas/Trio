@@ -56,6 +56,8 @@ struct TrioSettings: JSON, Equatable, Encodable {
     var maxFat: Decimal = 250
     var maxProtein: Decimal = 250
     var confirmBolusFaster: Bool = false
+    /// Off by default: the Apple Watch only reads heart rate once the user turns this on
+    var exercisePromptWatch: Bool = false
     var showForecastWatch: Bool = false
     var overrideFactor: Decimal = 0.8
     var fattyMeals: Bool = false
@@ -314,6 +316,10 @@ extension TrioSettings: Decodable {
 
         if let confirmBolusFaster = try? container.decode(Bool.self, forKey: .confirmBolusFaster) {
             settings.confirmBolusFaster = confirmBolusFaster
+        }
+
+        if let exercisePromptWatch = try? container.decode(Bool.self, forKey: .exercisePromptWatch) {
+            settings.exercisePromptWatch = exercisePromptWatch
         }
 
         if let showForecastWatch = try? container.decode(Bool.self, forKey: .showForecastWatch) {

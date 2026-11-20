@@ -683,6 +683,10 @@ import WatchConnectivity
             }
         }
 
+        if let exercisePromptEnabled = message[WatchMessageKeys.exercisePromptEnabled] as? Bool {
+            ExerciseHeartRateMonitor.shared.setEnabled(exercisePromptEnabled, appIsActive: isAppActive)
+        }
+
         if let showForecast = message[WatchMessageKeys.showForecastWatch] as? Bool {
             self.showForecast = showForecast
         }

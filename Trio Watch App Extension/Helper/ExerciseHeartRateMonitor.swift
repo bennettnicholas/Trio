@@ -15,6 +15,10 @@ enum ExercisePromptDestination {
 /// Trio only asks. Nothing is changed until the user picks a temp target or
 /// override themselves.
 ///
+/// Opt-in: off by default and turned on in Trio's iPhone settings
+/// (Settings → Apple Watch → Ask When Exercising). While it is off, the watch app
+/// never asks for Health access, never reads heart rate and schedules no checks.
+///
 /// Checks run:
 /// - in the background, about 4 times an hour (watchOS only grants this
 ///   budget while a Trio complication is on the active watch face), and
@@ -58,6 +62,7 @@ final class ExerciseHeartRateMonitor {
     private enum DefaultsKey {
         static let lastPromptDate = "Trio.exercisePrompt.lastPromptDate"
         static let snoozedUntil = "Trio.exercisePrompt.snoozedUntil"
+        static let isEnabled = "Trio.exercisePrompt.isEnabled"
     }
 
     private let healthStore = HKHealthStore()
@@ -69,9 +74,30 @@ final class ExerciseHeartRateMonitor {
 
     // MARK: - Entry points
 
+    /// Stored on the watch so background checks know the setting without the phone
+    var isEnabled: Bool {
+        defaults.bool(forKey: DefaultsKey.isEnabled)
+    }
+
+    /// Called with the setting the iPhone sends in every watch state update.
+    func setEnabled(_ enabled: Bool, appIsActive: Bool) {
+        guard enabled != isEnabled else { return }
+        defaults.set(enabled, forKey: DefaultsKey.isEnabled)
+        log.info(.exercise, "Ask When Exercising turned \(enabled ? "on" : "off")")
+
+        if enabled {
+            // Health access can only be requested while the app is open
+            if appIsActive { appDidBecomeActive() }
+        } else {
+            UNUserNotificationCenter.current()
+                .removeDeliveredNotifications(withIdentifiers: [PromptNotification.requestIdentifier])
+        }
+    }
+
     /// Call when the app becomes active: asks for permissions once, checks right away,
-    /// and makes sure a background check is scheduled.
+    /// and makes sure a background check is scheduled. Does nothing while the setting is off.
     func appDidBecomeActive() {
+        guard isEnabled else { return }
         Task {
             await requestPermissionsIfNeeded()
             await check(reason: "app opened")
@@ -81,6 +107,8 @@ final class ExerciseHeartRateMonitor {
 
     /// Runs from the SwiftUI `.backgroundTask(.appRefresh)` handler.
     func handleBackgroundRefresh() async {
+        // Turned off since this was scheduled: don't read and don't schedule another
+        guard isEnabled else { return }
         await check(reason: "background refresh")
         await scheduleNextBackgroundCheck()
     }
@@ -120,6 +148,7 @@ final class ExerciseHeartRateMonitor {
     // MARK: - Check
 
     private func check(reason: String) async {
+        guard isEnabled else { return }
         let now = Date()
 
         if let snoozedUntil = defaults.object(forKey: DefaultsKey.snoozedUntil) as? Date, snoozedUntil > now {
