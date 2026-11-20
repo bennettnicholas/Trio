@@ -31,6 +31,8 @@ import WatchConnectivity
     var overridePresets: [OverridePresetWatch] = []
     var tempTargetPresets: [TempTargetPresetWatch] = []
     var snoozeUntilDate: Date = .distantPast
+    /// Set when the user taps the "Are you exercising?" prompt; the main view opens that sheet
+    var exercisePromptDestination: ExercisePromptDestination?
 
     /// treatments inputs
     /// used to store carbs for combined meal-bolus-treatments

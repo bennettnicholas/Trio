@@ -1,0 +1,275 @@
+import Foundation
+import HealthKit
+import UserNotifications
+import WatchKit
+
+/// Which screen tapping the exercise prompt opens
+enum ExercisePromptDestination {
+    case tempTarget
+    case override
+}
+
+/// Watches the heart rate the Apple Watch already records and asks
+/// "Are you exercising?" when it has stayed elevated.
+///
+/// Trio only asks. Nothing is changed until the user picks a temp target or
+/// override themselves.
+///
+/// Checks run:
+/// - in the background, about 4 times an hour (watchOS only grants this
+///   budget while a Trio complication is on the active watch face), and
+/// - every time the watch app is opened.
+final class ExerciseHeartRateMonitor {
+    static let shared = ExerciseHeartRateMonitor()
+
+    // MARK: - Tunables
+
+    /// Readings at or above this count as elevated
+    static let thresholdBPM: Double = 100
+    /// How far back each check looks
+    static let window: TimeInterval = 10 * 60
+    /// The readings have to cover most of the window, not just its last minute
+    static let minimumCoverage: TimeInterval = 8 * 60
+    /// The newest reading must be this recent, so we don't ask after the user stopped
+    static let maximumReadingAge: TimeInterval = 3 * 60
+    /// Share of readings that must be elevated, so one dip at a crossing doesn't reset everything
+    static let elevatedShare: Double = 0.9
+    /// Too few readings say nothing about a 10-minute stretch
+    static let minimumReadings = 5
+    /// After asking, wait this long before asking again
+    static let promptCooldown: TimeInterval = 60 * 60
+    /// "Not now" silences the prompt for this long
+    static let notNowSnooze: TimeInterval = 2 * 60 * 60
+    /// watchOS treats this as "no earlier than"; it caps apps at about 4 wakes an hour anyway
+    static let refreshInterval: TimeInterval = 15 * 60
+
+    static let refreshIdentifier = "Trio.exerciseHeartRateCheck"
+
+    // MARK: - Notification identifiers
+
+    enum PromptNotification {
+        static let category = "Trio.exercisePrompt"
+        static let requestIdentifier = "Trio.exercisePrompt"
+        static let tempTargetAction = "Trio.exercisePrompt.tempTarget"
+        static let overrideAction = "Trio.exercisePrompt.override"
+        static let notNowAction = "Trio.exercisePrompt.notNow"
+    }
+
+    private enum DefaultsKey {
+        static let lastPromptDate = "Trio.exercisePrompt.lastPromptDate"
+        static let snoozedUntil = "Trio.exercisePrompt.snoozedUntil"
+    }
+
+    private let healthStore = HKHealthStore()
+    private let heartRateType = HKQuantityType(.heartRate)
+    private let defaults = UserDefaults.standard
+    private let log = WatchLogger.shared
+
+    private init() {}
+
+    // MARK: - Entry points
+
+    /// Call when the app becomes active: asks for permissions once, checks right away,
+    /// and makes sure a background check is scheduled.
+    func appDidBecomeActive() {
+        Task {
+            await requestPermissionsIfNeeded()
+            await check(reason: "app opened")
+            await scheduleNextBackgroundCheck()
+        }
+    }
+
+    /// Runs from the SwiftUI `.backgroundTask(.appRefresh)` handler.
+    func handleBackgroundRefresh() async {
+        await check(reason: "background refresh")
+        await scheduleNextBackgroundCheck()
+    }
+
+    /// "Not now" on the notification.
+    func snooze() {
+        let until = Date().addingTimeInterval(Self.notNowSnooze)
+        defaults.set(until, forKey: DefaultsKey.snoozedUntil)
+        log.info(.exercise, "Prompt snoozed until \(until.formatted(date: .omitted, time: .shortened))")
+    }
+
+    static func makeNotificationCategory() -> UNNotificationCategory {
+        UNNotificationCategory(
+            identifier: PromptNotification.category,
+            actions: [
+                UNNotificationAction(
+                    identifier: PromptNotification.tempTargetAction,
+                    title: String(localized: "Temp Target", comment: "Exercise prompt action that opens temp targets"),
+                    options: [.foreground]
+                ),
+                UNNotificationAction(
+                    identifier: PromptNotification.overrideAction,
+                    title: String(localized: "Override", comment: "Exercise prompt action that opens overrides"),
+                    options: [.foreground]
+                ),
+                UNNotificationAction(
+                    identifier: PromptNotification.notNowAction,
+                    title: String(localized: "Not now", comment: "Exercise prompt action that snoozes the prompt"),
+                    options: []
+                )
+            ],
+            intentIdentifiers: [],
+            options: []
+        )
+    }
+
+    // MARK: - Check
+
+    private func check(reason: String) async {
+        let now = Date()
+
+        if let snoozedUntil = defaults.object(forKey: DefaultsKey.snoozedUntil) as? Date, snoozedUntil > now {
+            log.debug(.exercise, "Check (\(reason)) skipped: snoozed")
+            return
+        }
+        if let lastPrompt = defaults.object(forKey: DefaultsKey.lastPromptDate) as? Date,
+           now.timeIntervalSince(lastPrompt) < Self.promptCooldown
+        {
+            log.debug(.exercise, "Check (\(reason)) skipped: asked within the last hour")
+            return
+        }
+
+        let readings: [Reading]
+        do {
+            readings = try await fetchReadings(since: now.addingTimeInterval(-Self.window))
+        } catch {
+            // errorDatabaseInaccessible means the watch is locked (off the wrist)
+            log.warning(.exercise, "Check (\(reason)) could not read heart rate", error: error)
+            return
+        }
+
+        let result = Self.evaluate(readings, now: now)
+        log.info(.exercise, "Check (\(reason)): \(result.summary)")
+
+        guard result.isElevated else { return }
+        await postPrompt()
+    }
+
+    struct Reading {
+        let start: Date
+        let end: Date
+        let bpm: Double
+        /// A series sample stands for several readings
+        let count: Int
+    }
+
+    struct Evaluation {
+        let isElevated: Bool
+        let summary: String
+    }
+
+    /// Pure so it can be tuned from the logs without touching HealthKit.
+    static func evaluate(_ readings: [Reading], now: Date) -> Evaluation {
+        let total = readings.reduce(0) { $0 + $1.count }
+        guard total >= minimumReadings, let first = readings.first, let last = readings.last else {
+            return Evaluation(isElevated: false, summary: "\(total) readings, too few")
+        }
+
+        let elevated = readings.filter { $0.bpm >= thresholdBPM }.reduce(0) { $0 + $1.count }
+        let share = Double(elevated) / Double(total)
+        let coverage = last.end.timeIntervalSince(first.start)
+        let newestAge = now.timeIntervalSince(last.end)
+        let minBPM = Int(readings.map(\.bpm).min() ?? 0)
+        let maxBPM = Int(readings.map(\.bpm).max() ?? 0)
+
+        let isElevated = share >= elevatedShare && coverage >= minimumCoverage && newestAge <= maximumReadingAge
+        let summary = "\(total) readings, \(minBPM)-\(maxBPM) bpm, \(Int(share * 100))% ≥ \(Int(thresholdBPM)), " +
+            "covering \(Int(coverage / 60)) min, newest \(Int(newestAge))s old → \(isElevated ? "elevated" : "not elevated")"
+        return Evaluation(isElevated: isElevated, summary: summary)
+    }
+
+    private func fetchReadings(since start: Date) async throws -> [Reading] {
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.quantitySample(
+                type: heartRateType,
+                predicate: HKQuery.predicateForSamples(withStart: start, end: nil)
+            )],
+            sortDescriptors: [SortDescriptor(\.startDate, order: .forward)]
+        )
+        let unit = HKUnit.count().unitDivided(by: .minute())
+        let samples = try await descriptor.result(for: healthStore)
+
+        return samples.map { sample in
+            if let series = sample as? HKDiscreteQuantitySample {
+                return Reading(
+                    start: series.startDate,
+                    end: series.endDate,
+                    bpm: series.averageQuantity.doubleValue(for: unit),
+                    count: max(series.count, 1)
+                )
+            }
+            return Reading(
+                start: sample.startDate,
+                end: sample.endDate,
+                bpm: sample.quantity.doubleValue(for: unit),
+                count: 1
+            )
+        }
+    }
+
+    // MARK: - Notification
+
+    private func postPrompt() async {
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "Are you exercising?", comment: "Exercise prompt title")
+        content.body = String(
+            localized: "Your heart rate has been above \(Int(Self.thresholdBPM)) bpm for 10 minutes. Set a temp target or override?",
+            comment: "Exercise prompt body"
+        )
+        content.sound = .default
+        content.categoryIdentifier = PromptNotification.category
+
+        let request = UNNotificationRequest(
+            identifier: PromptNotification.requestIdentifier,
+            content: content,
+            trigger: nil
+        )
+        do {
+            try await UNUserNotificationCenter.current().add(request)
+            defaults.set(Date(), forKey: DefaultsKey.lastPromptDate)
+            log.info(.exercise, "Asked \"Are you exercising?\"")
+        } catch {
+            log.error(.exercise, "Could not post the exercise prompt", error: error)
+        }
+    }
+
+    // MARK: - Permissions and scheduling
+
+    private func requestPermissionsIfNeeded() async {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            log.warning(.exercise, "Health data is not available on this watch")
+            return
+        }
+        do {
+            let status = try await healthStore.statusForAuthorizationRequest(toShare: [], read: [heartRateType])
+            if status == .shouldRequest {
+                try await healthStore.requestAuthorization(toShare: [], read: [heartRateType])
+                log.info(.exercise, "Asked for heart rate access")
+            }
+        } catch {
+            log.error(.exercise, "Heart rate access request failed", error: error)
+        }
+
+        do {
+            _ = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+        } catch {
+            log.error(.exercise, "Notification permission request failed", error: error)
+        }
+    }
+
+    @MainActor private func scheduleNextBackgroundCheck() {
+        let preferredDate = Date().addingTimeInterval(Self.refreshInterval)
+        WKApplication.shared().scheduleBackgroundRefresh(
+            withPreferredDate: preferredDate,
+            userInfo: Self.refreshIdentifier as NSString
+        ) { [log] error in
+            if let error {
+                log.error(.exercise, "Could not schedule the next heart rate check", error: error)
+            }
+        }
+    }
+}

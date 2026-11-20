@@ -237,6 +237,16 @@ struct TrioMainWatchView: View {
                     state.clearEntry()
                 }
             }
+            .onChange(of: state.exercisePromptDestination, initial: true) { _, destination in
+                guard let destination else { return }
+                state.exercisePromptDestination = nil
+                switch destination {
+                case .tempTarget:
+                    showingTempTargetSheet = true
+                case .override:
+                    showingOverrideSheet = true
+                }
+            }
             .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .active { now = Date() }
                 // An entry left for more than 2 min (wrist down, app in the background) is
