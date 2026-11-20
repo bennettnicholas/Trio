@@ -40,7 +40,7 @@ final class ExerciseHeartRateMonitor {
     static let maximumReadingAge: TimeInterval = 3 * 60
     /// Share of readings that must be elevated, so one dip at a crossing doesn't reset everything
     static let elevatedShare: Double = 0.9
-    /// Too few readings say nothing about a 10-minute stretch
+    /// Too few readings say nothing about the whole window
     static let minimumReadings = 5
     /// After asking, wait this long before asking again
     static let promptCooldown: TimeInterval = 60 * 60
