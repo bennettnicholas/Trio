@@ -344,6 +344,8 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
                 watchState.bolusIncrement = self.settingsManager.preferences.bolusIncrement
                 watchState.confirmBolusFaster = self.settingsManager.settings.confirmBolusFaster
                 watchState.exercisePromptEnabled = self.settingsManager.settings.exercisePromptWatch
+                watchState.exercisePromptThreshold = self.settingsManager.settings.exercisePromptThreshold
+                watchState.exercisePromptMinutes = self.settingsManager.settings.exercisePromptMinutes
 
                 watchState.showForecast = self.settingsManager.settings.showForecastWatch
                 watchState.isForecastCone = self.settingsManager.settings.forecastDisplayType == .cone
@@ -528,6 +530,8 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
             WatchMessageKeys.bolusIncrement: state.bolusIncrement,
             WatchMessageKeys.confirmBolusFaster: state.confirmBolusFaster,
             WatchMessageKeys.exercisePromptEnabled: state.exercisePromptEnabled,
+            WatchMessageKeys.exercisePromptThreshold: state.exercisePromptThreshold,
+            WatchMessageKeys.exercisePromptMinutes: state.exercisePromptMinutes,
             WatchMessageKeys.units: state.units.rawValue,
             WatchMessageKeys.showForecastWatch: state.showForecast,
             WatchMessageKeys.isForecastCone: state.isForecastCone,

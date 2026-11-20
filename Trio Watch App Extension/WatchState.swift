@@ -683,6 +683,11 @@ import WatchConnectivity
             }
         }
 
+        ExerciseHeartRateMonitor.shared.setConfig(
+            thresholdBPM: (message[WatchMessageKeys.exercisePromptThreshold] as? NSNumber)?.doubleValue,
+            minutes: (message[WatchMessageKeys.exercisePromptMinutes] as? NSNumber)?.doubleValue
+        )
+
         if let exercisePromptEnabled = message[WatchMessageKeys.exercisePromptEnabled] as? Bool {
             ExerciseHeartRateMonitor.shared.setEnabled(exercisePromptEnabled, appIsActive: isAppActive)
         }

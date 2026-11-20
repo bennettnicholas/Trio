@@ -114,6 +114,10 @@ struct SettingInputSection<VerboseHint: View>: View {
             return pickerSettingsProvider.settings.maxProtein
         case "overrideFactor":
             return pickerSettingsProvider.settings.overrideFactor
+        case "exercisePromptThreshold":
+            return pickerSettingsProvider.settings.exercisePromptThreshold
+        case "exercisePromptMinutes":
+            return pickerSettingsProvider.settings.exercisePromptMinutes
         case "fattyMealFactor":
             return pickerSettingsProvider.settings.fattyMealFactor
         case "sweetMealFactor":
@@ -243,6 +247,8 @@ struct SettingInputSection<VerboseHint: View>: View {
             return "\(decimalValue) \(String(localized: "min", comment: "Minutes abbreviation"))"
         case .hour:
             return "\(decimalValue) \(String(localized: "hr", comment: "Hours abbreviation"))"
+        case .bpm:
+            return "\(decimalValue) \(String(localized: "bpm", comment: "Beats per minute abbreviation"))"
         }
     }
 
@@ -263,6 +269,8 @@ struct SettingInputSection<VerboseHint: View>: View {
             return "\(decimalValue) \(UnitSpelling.spoken("min"))"
         case .hour:
             return "\(decimalValue) \(UnitSpelling.spoken("hr"))"
+        case .bpm:
+            return "\(decimalValue) \(String(localized: "beats per minute", comment: "Accessibility: spoken unit"))"
         }
     }
 

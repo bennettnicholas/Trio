@@ -28,12 +28,14 @@ final class ExerciseHeartRateMonitor {
 
     // MARK: - Tunables
 
-    /// Readings at or above this count as elevated
-    static let thresholdBPM: Double = 100
-    /// How far back each check looks
-    static let window: TimeInterval = 10 * 60
-    /// The readings have to cover most of the window, not just its last minute
-    static let minimumCoverage: TimeInterval = 8 * 60
+    /// Defaults until the iPhone sends the user's settings
+    static let defaultThresholdBPM: Double = 100
+    static let defaultMinutes: Double = 10
+    /// Same bounds as the iPhone pickers, so a bad value can't disable or flood the prompt
+    static let thresholdRange: ClosedRange<Double> = 80 ... 180
+    static let minutesRange: ClosedRange<Double> = 5 ... 30
+    /// The readings have to cover this share of the window, not just its last minute
+    static let minimumCoverageShare: Double = 0.8
     /// The newest reading must be this recent, so we don't ask after the user stopped
     static let maximumReadingAge: TimeInterval = 3 * 60
     /// Share of readings that must be elevated, so one dip at a crossing doesn't reset everything
@@ -63,6 +65,19 @@ final class ExerciseHeartRateMonitor {
         static let lastPromptDate = "Trio.exercisePrompt.lastPromptDate"
         static let snoozedUntil = "Trio.exercisePrompt.snoozedUntil"
         static let isEnabled = "Trio.exercisePrompt.isEnabled"
+        static let thresholdBPM = "Trio.exercisePrompt.thresholdBPM"
+        static let minutes = "Trio.exercisePrompt.minutes"
+    }
+
+    /// The user's settings, stored on the watch so background checks have them without the phone
+    struct Config {
+        /// Readings at or above this count as elevated
+        let thresholdBPM: Double
+        /// How long heart rate has to stay elevated; also how far back each check looks
+        let minutes: Double
+
+        var window: TimeInterval { minutes * 60 }
+        var minimumCoverage: TimeInterval { window * ExerciseHeartRateMonitor.minimumCoverageShare }
     }
 
     private let healthStore = HKHealthStore()
@@ -73,6 +88,28 @@ final class ExerciseHeartRateMonitor {
     private init() {}
 
     // MARK: - Entry points
+
+    var config: Config {
+        let threshold = defaults.object(forKey: DefaultsKey.thresholdBPM) as? Double ?? Self.defaultThresholdBPM
+        let minutes = defaults.object(forKey: DefaultsKey.minutes) as? Double ?? Self.defaultMinutes
+        return Config(
+            thresholdBPM: threshold.clamped(to: Self.thresholdRange),
+            minutes: minutes.clamped(to: Self.minutesRange)
+        )
+    }
+
+    /// Called with the threshold and duration the iPhone sends in every watch state update.
+    func setConfig(thresholdBPM: Double?, minutes: Double?) {
+        let current = config
+        if let thresholdBPM, thresholdBPM != current.thresholdBPM {
+            defaults.set(thresholdBPM.clamped(to: Self.thresholdRange), forKey: DefaultsKey.thresholdBPM)
+            log.info(.exercise, "Threshold set to \(Int(thresholdBPM)) bpm")
+        }
+        if let minutes, minutes != current.minutes {
+            defaults.set(minutes.clamped(to: Self.minutesRange), forKey: DefaultsKey.minutes)
+            log.info(.exercise, "Duration set to \(Int(minutes)) min")
+        }
+    }
 
     /// Stored on the watch so background checks know the setting without the phone
     var isEnabled: Bool {
@@ -150,6 +187,7 @@ final class ExerciseHeartRateMonitor {
     private func check(reason: String) async {
         guard isEnabled else { return }
         let now = Date()
+        let config = self.config
 
         if let snoozedUntil = defaults.object(forKey: DefaultsKey.snoozedUntil) as? Date, snoozedUntil > now {
             log.debug(.exercise, "Check (\(reason)) skipped: snoozed")
@@ -164,18 +202,18 @@ final class ExerciseHeartRateMonitor {
 
         let readings: [Reading]
         do {
-            readings = try await fetchReadings(since: now.addingTimeInterval(-Self.window))
+            readings = try await fetchReadings(since: now.addingTimeInterval(-config.window))
         } catch {
             // errorDatabaseInaccessible means the watch is locked (off the wrist)
             log.warning(.exercise, "Check (\(reason)) could not read heart rate", error: error)
             return
         }
 
-        let result = Self.evaluate(readings, now: now)
+        let result = Self.evaluate(readings, now: now, config: config)
         log.info(.exercise, "Check (\(reason)): \(result.summary)")
 
         guard result.isElevated else { return }
-        await postPrompt()
+        await postPrompt(config: config)
     }
 
     struct Reading {
@@ -192,21 +230,21 @@ final class ExerciseHeartRateMonitor {
     }
 
     /// Pure so it can be tuned from the logs without touching HealthKit.
-    static func evaluate(_ readings: [Reading], now: Date) -> Evaluation {
+    static func evaluate(_ readings: [Reading], now: Date, config: Config) -> Evaluation {
         let total = readings.reduce(0) { $0 + $1.count }
         guard total >= minimumReadings, let first = readings.first, let last = readings.last else {
             return Evaluation(isElevated: false, summary: "\(total) readings, too few")
         }
 
-        let elevated = readings.filter { $0.bpm >= thresholdBPM }.reduce(0) { $0 + $1.count }
+        let elevated = readings.filter { $0.bpm >= config.thresholdBPM }.reduce(0) { $0 + $1.count }
         let share = Double(elevated) / Double(total)
         let coverage = last.end.timeIntervalSince(first.start)
         let newestAge = now.timeIntervalSince(last.end)
         let minBPM = Int(readings.map(\.bpm).min() ?? 0)
         let maxBPM = Int(readings.map(\.bpm).max() ?? 0)
 
-        let isElevated = share >= elevatedShare && coverage >= minimumCoverage && newestAge <= maximumReadingAge
-        let summary = "\(total) readings, \(minBPM)-\(maxBPM) bpm, \(Int(share * 100))% ≥ \(Int(thresholdBPM)), " +
+        let isElevated = share >= elevatedShare && coverage >= config.minimumCoverage && newestAge <= maximumReadingAge
+        let summary = "\(total) readings, \(minBPM)-\(maxBPM) bpm, \(Int(share * 100))% ≥ \(Int(config.thresholdBPM)), " +
             "covering \(Int(coverage / 60)) min, newest \(Int(newestAge))s old → \(isElevated ? "elevated" : "not elevated")"
         return Evaluation(isElevated: isElevated, summary: summary)
     }
@@ -242,11 +280,11 @@ final class ExerciseHeartRateMonitor {
 
     // MARK: - Notification
 
-    private func postPrompt() async {
+    private func postPrompt(config: Config) async {
         let content = UNMutableNotificationContent()
         content.title = String(localized: "Are you exercising?", comment: "Exercise prompt title")
         content.body = String(
-            localized: "Your heart rate has been above \(Int(Self.thresholdBPM)) bpm for 10 minutes. Set a temp target or override?",
+            localized: "Your heart rate has been above \(Int(config.thresholdBPM)) bpm for \(Int(config.minutes)) minutes. Set a temp target or override?",
             comment: "Exercise prompt body"
         )
         content.sound = .default
@@ -300,5 +338,11 @@ final class ExerciseHeartRateMonitor {
                 log.error(.exercise, "Could not schedule the next heart rate check", error: error)
             }
         }
+    }
+}
+
+private extension Double {
+    func clamped(to range: ClosedRange<Double>) -> Double {
+        Swift.min(Swift.max(self, range.lowerBound), range.upperBound)
     }
 }

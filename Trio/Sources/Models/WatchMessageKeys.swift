@@ -52,6 +52,8 @@ enum WatchMessageKeys {
     static let bolusIncrement = "bolusIncrement"
     static let confirmBolusFaster = "confirmBolusFaster"
     static let exercisePromptEnabled = "exercisePromptEnabled"
+    static let exercisePromptThreshold = "exercisePromptThreshold"
+    static let exercisePromptMinutes = "exercisePromptMinutes"
 
     // Notification Actions
     static let snoozeDuration = "snoozeDuration"
