@@ -48,6 +48,8 @@ final class ExerciseHeartRateMonitor {
     static let notNowSnooze: TimeInterval = 2 * 60 * 60
     /// watchOS treats this as "no earlier than"; it caps apps at about 4 wakes an hour anyway
     static let refreshInterval: TimeInterval = 15 * 60
+    /// Checks piggybacked on iPhone updates run at most this often
+    static let phoneUpdateCheckGap: TimeInterval = 4 * 60
 
     static let refreshIdentifier = "Trio.exerciseHeartRateCheck"
 
@@ -63,6 +65,7 @@ final class ExerciseHeartRateMonitor {
 
     private enum DefaultsKey {
         static let lastPromptDate = "Trio.exercisePrompt.lastPromptDate"
+        static let lastPhoneUpdateCheck = "Trio.exercisePrompt.lastPhoneUpdateCheck"
         static let snoozedUntil = "Trio.exercisePrompt.snoozedUntil"
         static let isEnabled = "Trio.exercisePrompt.isEnabled"
         static let thresholdBPM = "Trio.exercisePrompt.thresholdBPM"
@@ -148,6 +151,27 @@ final class ExerciseHeartRateMonitor {
         guard isEnabled else { return }
         await check(reason: "background refresh")
         await scheduleNextBackgroundCheck()
+    }
+
+    /// Trio's iPhone sends a state update after every loop (about every 5 minutes), and
+    /// watchOS may wake the watch app in the background to receive it. This piggybacks a
+    /// check on those wakes, so the prompt can come sooner than the 15-minute refreshes allow.
+    ///
+    /// Called after the update has been applied, and the check runs in its own task, so it
+    /// never delays or changes how the update itself is handled. Sends nothing to the phone.
+    func phoneUpdateArrived(appIsActive: Bool) {
+        // While the app is open, opening it already ran a check
+        guard isEnabled, !appIsActive else { return }
+
+        let now = Date()
+        if let last = defaults.object(forKey: DefaultsKey.lastPhoneUpdateCheck) as? Date,
+           now.timeIntervalSince(last) < Self.phoneUpdateCheckGap
+        {
+            return
+        }
+        defaults.set(now, forKey: DefaultsKey.lastPhoneUpdateCheck)
+
+        Task { await check(reason: "phone update") }
     }
 
     /// "Not now" on the notification.

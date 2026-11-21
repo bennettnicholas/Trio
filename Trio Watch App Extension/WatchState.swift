@@ -576,6 +576,9 @@ import WatchConnectivity
         }
 
         WatchLogger.shared.debug(.data, "Watch state applied")
+
+        // Uses the background wake this update brought to check heart rate (opt-in)
+        ExerciseHeartRateMonitor.shared.phoneUpdateArrived(appIsActive: isAppActive)
     }
 
     /// Updates the UI properties
