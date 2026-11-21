@@ -54,6 +54,10 @@ enum WatchMessageKeys {
     static let exercisePromptEnabled = "exercisePromptEnabled"
     static let exercisePromptThreshold = "exercisePromptThreshold"
     static let exercisePromptMinutes = "exercisePromptMinutes"
+    /// Watch → iPhone: the watch asked "Are you exercising?"; value is the body text
+    static let exercisePrompt = "exercisePrompt"
+    /// Shared by the watch and iPhone notifications, so the watch shows the prompt only once
+    static let exercisePromptNotificationID = "Trio.exercisePrompt"
 
     // Notification Actions
     static let snoozeDuration = "snoozeDuration"

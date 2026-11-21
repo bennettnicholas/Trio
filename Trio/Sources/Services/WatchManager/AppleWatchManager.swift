@@ -3,6 +3,7 @@ import CoreData
 import Foundation
 import Swinject
 import UIKit
+import UserNotifications
 import WatchConnectivity
 
 /// Protocol defining the base functionality for Watch communication
@@ -813,6 +814,12 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
             WatchLogIngest.legacyRecords(from: logs).forEach(TrioLogger.sink.accept)
         }
 
+        if let exercisePromptBody = userInfo[WatchMessageKeys.exercisePrompt] as? String {
+            Task { @MainActor [weak self] in
+                await self?.postExercisePrompt(body: exercisePromptBody)
+            }
+        }
+
         if let snoozeMinutes = userInfo[WatchMessageKeys.snoozeDuration] as? Int {
             info(.watch, "Watch requested alert snooze for \(snoozeMinutes) min")
             Task { @MainActor [weak self] in
@@ -842,6 +849,33 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
         // Try to reconnect after a short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
             self?.retryConnection()
+        }
+    }
+
+    /// Shows the watch's "Are you exercising?" prompt on the iPhone too. Tapping it opens Trio.
+    /// Uses the watch's identifier, so when the iPhone forwards it to the watch, the watch
+    /// replaces its own copy instead of showing it twice.
+    @MainActor private func postExercisePrompt(body: String) async {
+        guard settingsManager.settings.exercisePromptWatch else {
+            debug(.watch, "Ignored exercise prompt from watch: Ask When Exercising is off")
+            return
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = String(localized: "Are you exercising?", comment: "Exercise prompt title")
+        content.body = body
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: WatchMessageKeys.exercisePromptNotificationID,
+            content: content,
+            trigger: nil
+        )
+        do {
+            try await UNUserNotificationCenter.current().add(request)
+            info(.watch, "Showed the watch's exercise prompt on iPhone")
+        } catch {
+            warning(.watch, "Could not show the exercise prompt on iPhone", error: error)
         }
     }
 

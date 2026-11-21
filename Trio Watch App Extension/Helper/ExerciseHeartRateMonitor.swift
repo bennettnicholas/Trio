@@ -1,6 +1,7 @@
 import Foundation
 import HealthKit
 import UserNotifications
+import WatchConnectivity
 import WatchKit
 
 /// Which screen tapping the exercise prompt opens
@@ -57,7 +58,7 @@ final class ExerciseHeartRateMonitor {
 
     enum PromptNotification {
         static let category = "Trio.exercisePrompt"
-        static let requestIdentifier = "Trio.exercisePrompt"
+        static let requestIdentifier = WatchMessageKeys.exercisePromptNotificationID
         static let tempTargetAction = "Trio.exercisePrompt.tempTarget"
         static let overrideAction = "Trio.exercisePrompt.override"
         static let notNowAction = "Trio.exercisePrompt.notNow"
@@ -326,6 +327,23 @@ final class ExerciseHeartRateMonitor {
         } catch {
             log.error(.exercise, "Could not post the exercise prompt", error: error)
         }
+
+        sendPromptToPhone(body: content.body)
+    }
+
+    /// A notification the watch app posts only ever shows on the watch, so ask Trio on the
+    /// iPhone to post the same prompt there. `transferUserInfo` is queued and delivered even
+    /// when the iPhone app is in the background. The iPhone uses the same identifier, so a
+    /// copy forwarded back to the watch replaces this one instead of showing twice.
+    private func sendPromptToPhone(body: String) {
+        guard WCSession.isSupported() else { return }
+        let session = WCSession.default
+        guard session.activationState == .activated else {
+            log.warning(.exercise, "Could not send the prompt to iPhone: connection not active")
+            return
+        }
+        session.transferUserInfo([WatchMessageKeys.exercisePrompt: body])
+        log.info(.exercise, "Sent the prompt to iPhone")
     }
 
     // MARK: - Permissions and scheduling
