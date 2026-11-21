@@ -37,8 +37,13 @@ final class ExerciseHeartRateMonitor {
     static let minutesRange: ClosedRange<Double> = 5 ... 30
     /// The readings have to cover this share of the window, not just its last minute
     static let minimumCoverageShare: Double = 0.8
-    /// The newest reading must be this recent, so we don't ask after the user stopped
-    static let maximumReadingAge: TimeInterval = 3 * 60
+    /// The newest reading must be this recent, so we don't ask after the user stopped.
+    /// Apple Watch saves heart rate to Health in batches, and test logs showed the newest
+    /// reading is often 1 to 5 minutes old in the background, so this allows for that.
+    static let maximumReadingAge: TimeInterval = 5 * 60
+    /// Each check looks back this much further than the chosen window, so the batching
+    /// delay above doesn't leave the end of the window empty
+    static let healthWriteDelayAllowance: TimeInterval = 3 * 60
     /// Share of readings that must be elevated, so one dip at a crossing doesn't reset everything
     static let elevatedShare: Double = 0.9
     /// Too few readings say nothing about the whole window
@@ -49,8 +54,9 @@ final class ExerciseHeartRateMonitor {
     static let notNowSnooze: TimeInterval = 2 * 60 * 60
     /// watchOS treats this as "no earlier than"; it caps apps at about 4 wakes an hour anyway
     static let refreshInterval: TimeInterval = 15 * 60
-    /// Checks piggybacked on iPhone updates run at most this often
-    static let phoneUpdateCheckGap: TimeInterval = 4 * 60
+    /// Checks piggybacked on iPhone updates run at most this often. Short, because the iPhone
+    /// often sends two updates a few seconds apart; a longer gap skipped real wakes in testing.
+    static let phoneUpdateCheckGap: TimeInterval = 90
 
     static let refreshIdentifier = "Trio.exerciseHeartRateCheck"
 
@@ -66,6 +72,7 @@ final class ExerciseHeartRateMonitor {
 
     private enum DefaultsKey {
         static let lastPromptDate = "Trio.exercisePrompt.lastPromptDate"
+        static let nextBackgroundCheck = "Trio.exercisePrompt.nextBackgroundCheck"
         static let lastPhoneUpdateCheck = "Trio.exercisePrompt.lastPhoneUpdateCheck"
         static let snoozedUntil = "Trio.exercisePrompt.snoozedUntil"
         static let isEnabled = "Trio.exercisePrompt.isEnabled"
@@ -142,7 +149,9 @@ final class ExerciseHeartRateMonitor {
         Task {
             await requestPermissionsIfNeeded()
             await check(reason: "app opened")
-            await scheduleNextBackgroundCheck()
+            // Only fill a gap: rescheduling here would push a pending check back 15 minutes
+            // every time the app is opened
+            await scheduleNextBackgroundCheck(onlyIfNonePending: true)
         }
     }
 
@@ -227,7 +236,9 @@ final class ExerciseHeartRateMonitor {
 
         let readings: [Reading]
         do {
-            readings = try await fetchReadings(since: now.addingTimeInterval(-config.window))
+            readings = try await fetchReadings(
+                since: now.addingTimeInterval(-(config.window + Self.healthWriteDelayAllowance))
+            )
         } catch {
             // errorDatabaseInaccessible means the watch is locked (off the wrist)
             log.warning(.exercise, "Check (\(reason)) could not read heart rate", error: error)
@@ -370,8 +381,16 @@ final class ExerciseHeartRateMonitor {
         }
     }
 
-    @MainActor private func scheduleNextBackgroundCheck() {
-        let preferredDate = Date().addingTimeInterval(Self.refreshInterval)
+    @MainActor private func scheduleNextBackgroundCheck(onlyIfNonePending: Bool = false) {
+        let now = Date()
+        if onlyIfNonePending,
+           let pending = defaults.object(forKey: DefaultsKey.nextBackgroundCheck) as? Date,
+           pending > now
+        {
+            return
+        }
+        let preferredDate = now.addingTimeInterval(Self.refreshInterval)
+        defaults.set(preferredDate, forKey: DefaultsKey.nextBackgroundCheck)
         WKApplication.shared().scheduleBackgroundRefresh(
             withPreferredDate: preferredDate,
             userInfo: Self.refreshIdentifier as NSString
