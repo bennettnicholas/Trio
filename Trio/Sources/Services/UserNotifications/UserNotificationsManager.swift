@@ -222,6 +222,12 @@ extension BaseUserNotificationsManager: UNUserNotificationCenterDelegate {
             completionHandler([.badge, .sound, .list])
             return
         }
+        // The exercise reminder shows as a banner while Trio is open, so it can be tapped
+        // straight into temp targets or overrides
+        if notification.request.content.categoryIdentifier == ExerciseReminderNotifications.category {
+            completionHandler([.banner, .sound, .list])
+            return
+        }
         completionHandler([.banner, .badge, .sound, .list])
     }
 
@@ -247,6 +253,17 @@ extension BaseUserNotificationsManager: UNUserNotificationCenterDelegate {
             info(.watch, "Exercise reminder acknowledged on iPhone (\(response.actionIdentifier))")
             if WCSession.isSupported(), WCSession.default.activationState == .activated {
                 WCSession.default.transferUserInfo([WatchMessageKeys.exercisePromptAcknowledged: response.actionIdentifier])
+            }
+            // Open the page the user picked. Nothing is applied until they choose a preset.
+            let tab: Adjustments.Tab?
+            switch response.actionIdentifier {
+            case ExerciseReminderNotifications.overrideAction: tab = .overrides
+            case ExerciseReminderNotifications.tempTargetAction,
+                 UNNotificationDefaultActionIdentifier: tab = .tempTargets
+            default: tab = nil
+            }
+            if let tab {
+                Task { @MainActor in AdjustmentsNavigationRequest.shared.open(tab) }
             }
             return
         }

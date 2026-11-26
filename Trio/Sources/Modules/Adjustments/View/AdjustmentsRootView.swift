@@ -25,6 +25,7 @@ extension Adjustments {
         @State var showCancelOverrideConfirmDialog = false
         @State var showCancelTempTargetConfirmDialog = false
         @State var pendingPresetActivation: PendingPresetActivation?
+        @State private var navigationRequest = AdjustmentsNavigationRequest.shared
 
         private var shouldDisplayStickyOverrideStopButton: Bool {
             state.isOverrideEnabled && state.activeOverrideName.isNotEmpty
@@ -76,6 +77,12 @@ extension Adjustments {
                 .scrollContentBackground(.hidden)
                 .background(appState.trioBackgroundColor(for: colorScheme))
                 .onAppear(perform: configureView)
+                // Opened from the exercise reminder: show the page the user picked
+                .onChange(of: navigationRequest.requestID, initial: true) { _, requestID in
+                    guard requestID > navigationRequest.handledByAdjustments else { return }
+                    navigationRequest.handledByAdjustments = requestID
+                    state.selectedTab = navigationRequest.tab
+                }
                 .navigationBarTitle("Adjustments")
                 .navigationBarTitleDisplayMode(.large)
                 .toolbar {
