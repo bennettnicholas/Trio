@@ -27,8 +27,9 @@ protocol AdjustmentsProvider: Provider {}
 /// reminder: Temp Target (or a plain tap) opens temp targets, Override opens overrides.
 /// The request waits here until the views are on screen, so it also works when the tap
 /// launches Trio. Each view remembers the last request it handled, so neither depends on
-/// the order SwiftUI updates them in.
-@MainActor @Observable final class AdjustmentsNavigationRequest {
+/// the order SwiftUI updates them in. Only touch it on the main thread (views, or a
+/// `Task { @MainActor in }`); it isn't marked `@MainActor` because Trio's views aren't.
+@Observable final class AdjustmentsNavigationRequest {
     static let shared = AdjustmentsNavigationRequest()
 
     private(set) var tab: Adjustments.Tab = .tempTargets
