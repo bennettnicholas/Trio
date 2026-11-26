@@ -35,10 +35,10 @@ extension WatchConfig {
                     decimalValue: $decimalPlaceholder,
                     booleanValue: $state.exercisePromptWatch,
                     shouldDisplayHint: $shouldDisplayHint,
-                    selectedVerboseHint: hintBinding(String(localized: "Ask When Exercising")),
+                    selectedVerboseHint: hintBinding(String(localized: "Ask to Temp Target When Exercise Detected")),
                     units: state.units,
                     type: .boolean,
-                    label: String(localized: "Ask When Exercising"),
+                    label: String(localized: "Ask to Temp Target When Exercise Detected"),
                     miniHint: String(localized: "Apple Watch reminds you to set a temp target when you exercise."),
                     verboseHint: VStack(alignment: .leading, spacing: 10) {
                         Text("Default: OFF").bold()

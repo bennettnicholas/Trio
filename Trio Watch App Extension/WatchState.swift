@@ -33,7 +33,7 @@ import WatchConnectivity
     var snoozeUntilDate: Date = .distantPast
     /// Set when the user taps the "Are you exercising?" prompt; the main view opens that sheet
     var exercisePromptDestination: ExercisePromptDestination?
-    /// Shows the Exercise Checks page while Ask When Exercising is on
+    /// Shows the Exercise Checks page while Ask to Temp Target When Exercise Detected is on
     var exercisePromptEnabled = ExerciseHeartRateMonitor.shared.isEnabled
 
     /// treatments inputs

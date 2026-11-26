@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Last page of the watch app while Ask When Exercising is on: every recent exercise check,
+/// Last page of the watch app while Ask to Temp Target When Exercise Detected is on: every recent exercise check,
 /// newest first, so detection can be tested and tuned right on the wrist.
 struct ExerciseCheckHistoryView: View {
     @State private var records: [ExerciseCheckRecord] = []

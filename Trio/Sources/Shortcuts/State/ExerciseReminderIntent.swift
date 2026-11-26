@@ -6,7 +6,7 @@ import UserNotifications
 /// Shortcuts app: Automation → Apple Watch Workout → Is Started → Run Immediately → this action.
 ///
 /// Like the heart rate check on the watch, it only reminds: it posts "Are you exercising?" and
-/// changes nothing. It does nothing while Ask When Exercising is off, and in Log Only mode it
+/// changes nothing. It does nothing while Ask to Temp Target When Exercise Detected is off, and in Log Only mode it
 /// only writes to the log.
 @available(iOS 16.0, *) struct ExerciseReminderIntent: AppIntent {
     // Title of the action in the Shortcuts app
@@ -24,7 +24,7 @@ import UserNotifications
     @MainActor func perform() async throws -> some IntentResult {
         let settings = BaseIntentsRequest().settingsManager.settings
         guard settings.exercisePromptWatch else {
-            info(.watch, "Workout reminder from Shortcuts ignored: Ask When Exercising is off")
+            info(.watch, "Workout reminder from Shortcuts ignored: Ask to Temp Target When Exercise Detected is off")
             return .result()
         }
         guard !settings.exercisePromptLogOnly else {

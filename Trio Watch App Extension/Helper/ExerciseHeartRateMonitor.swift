@@ -19,7 +19,7 @@ enum ExercisePromptDestination {
 /// Trio only reminds. Nothing is changed until the user picks a temp target or override.
 ///
 /// Opt-in: off by default and turned on in Trio's iPhone settings
-/// (Settings → Apple Watch → Ask When Exercising). While it is off, the watch app never asks
+/// (Settings → Notifications → Exercise Reminder → Ask to Temp Target When Exercise Detected). While it is off, the watch app never asks
 /// for Health or Motion access, never reads either, and schedules no checks.
 ///
 /// How it decides (see `evaluate`):
@@ -170,7 +170,7 @@ final class ExerciseHeartRateMonitor {
     func setEnabled(_ enabled: Bool, appIsActive: Bool) {
         guard enabled != isEnabled else { return }
         defaults.set(enabled, forKey: DefaultsKey.isEnabled)
-        log.info(.exercise, "Ask When Exercising turned \(enabled ? "on" : "off")")
+        log.info(.exercise, "Ask to Temp Target When Exercise Detected turned \(enabled ? "on" : "off")")
 
         if enabled {
             // Health and Motion access can only be requested while the app is open

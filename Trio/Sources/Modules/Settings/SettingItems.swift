@@ -395,7 +395,7 @@ enum SettingItems {
             title: "Exercise Reminder",
             view: .exerciseReminder,
             searchContents: [
-                "Ask When Exercising",
+                "Ask to Temp Target When Exercise Detected",
                 "Exercise Heart Rate",
                 "Re-Alert If Not Acknowledged",
                 "Re-Alert Every",

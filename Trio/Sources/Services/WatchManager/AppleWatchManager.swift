@@ -879,7 +879,7 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
     @MainActor private func postExercisePrompt(body: String, postedAt: Date) async {
         let settings = settingsManager.settings
         guard settings.exercisePromptWatch else {
-            debug(.watch, "Ignored exercise prompt from watch: Ask When Exercising is off")
+            debug(.watch, "Ignored exercise prompt from watch: Ask to Temp Target When Exercise Detected is off")
             return
         }
 

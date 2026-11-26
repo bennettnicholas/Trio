@@ -105,7 +105,7 @@ struct TrioMainWatchView: View {
                 AlarmSnoozeView(state: state)
                     .tag(2)
 
-                // Page 4: Exercise check history, only while Ask When Exercising is on
+                // Page 4: Exercise check history, only while Ask to Temp Target When Exercise Detected is on
                 if state.exercisePromptEnabled {
                     ExerciseCheckHistoryView()
                         .tag(3)
