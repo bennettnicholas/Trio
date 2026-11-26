@@ -1,5 +1,6 @@
 import SwiftUI
 import Swinject
+import WatchConnectivity
 
 extension WatchConfig {
     /// Settings → Notifications → Exercise Reminder: turns the Apple Watch exercise reminder on,
@@ -14,6 +15,8 @@ extension WatchConfig {
         @State var hintLabel: String?
         @State private var decimalPlaceholder: Decimal = 0.0
         @State private var booleanPlaceholder: Bool = false
+        /// Detection runs in the Trio watch app, so say so when there's no watch to run it
+        @State private var hasWatchApp = true
 
         @Environment(\.colorScheme) var colorScheme
         @Environment(AppState.self) var appState
@@ -31,6 +34,22 @@ extension WatchConfig {
 
         var body: some View {
             List {
+                if !hasWatchApp {
+                    Section {
+                        HStack(alignment: .top) {
+                            Image(systemName: "applewatch.slash").foregroundStyle(.orange)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Needs an Apple Watch").bold()
+                                Text(
+                                    "Exercise detection runs in the Trio Watch app. Pair an Apple Watch and install the Trio Watch app to use it. The Shortcuts workout reminder works without a watch."
+                                )
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                            }
+                        }
+                    }.listRowBackground(Color.chart)
+                }
+
                 SettingInputSection(
                     decimalValue: $decimalPlaceholder,
                     booleanValue: $state.exercisePromptWatch,
@@ -163,7 +182,11 @@ extension WatchConfig {
                     sheetTitle: String(localized: "Help", comment: "Help sheet title")
                 )
             }
-            .onAppear(perform: configureView)
+            .onAppear {
+                configureView()
+                // Trio's watch manager activates the session at launch
+                hasWatchApp = WCSession.isSupported() && WCSession.default.isPaired && WCSession.default.isWatchAppInstalled
+            }
             .navigationTitle("Exercise Reminder")
             .navigationBarTitleDisplayMode(.automatic)
             .settingsHighlightScroll()
