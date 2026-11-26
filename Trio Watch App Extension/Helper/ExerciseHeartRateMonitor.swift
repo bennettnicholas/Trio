@@ -82,13 +82,7 @@ final class ExerciseHeartRateMonitor {
 
     // MARK: - Notification identifiers
 
-    enum PromptNotification {
-        static let category = "Trio.exercisePrompt"
-        static let requestIdentifier = WatchMessageKeys.exercisePromptNotificationID
-        static let tempTargetAction = "Trio.exercisePrompt.tempTarget"
-        static let overrideAction = "Trio.exercisePrompt.override"
-        static let notNowAction = "Trio.exercisePrompt.notNow"
-    }
+    typealias PromptNotification = ExerciseReminderNotifications
 
     private enum DefaultsKey {
         static let lastPromptDate = "Trio.exercisePrompt.lastPromptDate"
@@ -99,6 +93,9 @@ final class ExerciseHeartRateMonitor {
         static let isEnabled = "Trio.exercisePrompt.isEnabled"
         static let exerciseBPM = "Trio.exercisePrompt.exerciseBPM"
         static let logOnly = "Trio.exercisePrompt.logOnly"
+        static let repeatMinutes = "Trio.exercisePrompt.repeatMinutes"
+        static let repeatCount = "Trio.exercisePrompt.repeatCount"
+        static let adjustmentActive = "Trio.exercisePrompt.adjustmentActive"
         static let history = "Trio.exercisePrompt.history"
     }
 
@@ -108,6 +105,10 @@ final class ExerciseHeartRateMonitor {
         let exerciseBPM: Double
         /// Test mode: check and record everything, but never notify
         let logOnly: Bool
+        /// Minutes between re-alerts while the reminder isn't acknowledged; 0 means off
+        let repeatMinutes: Double
+        /// How many re-alerts at most
+        let repeatCount: Int
 
         /// Readings at or above this count as elevated
         var elevatedBPM: Double { (exerciseBPM * ExerciseHeartRateMonitor.elevatedFactor).rounded() }
@@ -130,13 +131,23 @@ final class ExerciseHeartRateMonitor {
         let bpm = defaults.object(forKey: DefaultsKey.exerciseBPM) as? Double ?? Self.defaultExerciseBPM
         return Config(
             exerciseBPM: bpm.clamped(to: Self.exerciseBPMRange),
-            logOnly: defaults.bool(forKey: DefaultsKey.logOnly)
+            logOnly: defaults.bool(forKey: DefaultsKey.logOnly),
+            repeatMinutes: defaults.object(forKey: DefaultsKey.repeatMinutes) as? Double ?? 10,
+            repeatCount: defaults.object(forKey: DefaultsKey.repeatCount) as? Int ?? 2
         )
     }
 
     /// Called with the settings the iPhone sends in every watch state update.
-    func setConfig(exerciseBPM: Double?, logOnly: Bool?) {
+    func setConfig(exerciseBPM: Double?, logOnly: Bool?, repeatMinutes: Double?, repeatCount: Int?) {
         let current = config
+        if let repeatMinutes, repeatMinutes != current.repeatMinutes {
+            defaults.set(max(repeatMinutes, 0), forKey: DefaultsKey.repeatMinutes)
+            log.info(.exercise, repeatMinutes > 0 ? "Re-alert every \(Int(repeatMinutes)) min" : "Re-alert turned off")
+        }
+        if let repeatCount, repeatCount != current.repeatCount {
+            defaults.set(repeatCount.clamped(to: 1 ... PromptNotification.maxRepeats), forKey: DefaultsKey.repeatCount)
+            log.info(.exercise, "Re-alert up to \(repeatCount) times")
+        }
         if let exerciseBPM, exerciseBPM != current.exerciseBPM {
             defaults.set(exerciseBPM.clamped(to: Self.exerciseBPMRange), forKey: DefaultsKey.exerciseBPM)
             log.info(.exercise, "Exercise heart rate set to \(Int(exerciseBPM)) bpm")
@@ -166,8 +177,7 @@ final class ExerciseHeartRateMonitor {
             if appIsActive { appDidBecomeActive() }
         } else {
             defaults.removeObject(forKey: DefaultsKey.sustainedSince)
-            UNUserNotificationCenter.current()
-                .removeDeliveredNotifications(withIdentifiers: [PromptNotification.requestIdentifier])
+            PromptNotification.cancelAll()
         }
     }
 
@@ -215,6 +225,32 @@ final class ExerciseHeartRateMonitor {
         Task { await check(reason: .phoneUpdate) }
     }
 
+    /// The user tapped, dismissed or snoozed the reminder, here or on the iPhone: stop the
+    /// re-alerts on the watch, and tell the iPhone to stop its own unless it told us.
+    func acknowledge(action: String, fromPhone: Bool) {
+        PromptNotification.cancelAll()
+        if action == PromptNotification.notNowAction { snooze() }
+        log.info(.exercise, "Reminder acknowledged on \(fromPhone ? "iPhone" : "watch") (\(action)); re-alerts stopped")
+
+        guard !fromPhone, WCSession.isSupported(), WCSession.default.activationState == .activated else { return }
+        WCSession.default.transferUserInfo([WatchMessageKeys.exercisePromptAcknowledged: action])
+    }
+
+    /// Called with every iPhone update. While a temp target or override is running the user has
+    /// already acted, so checks don't remind and any re-alerts stop.
+    func setAdjustmentActive(_ active: Bool) {
+        if active != defaults.bool(forKey: DefaultsKey.adjustmentActive) {
+            defaults.set(active, forKey: DefaultsKey.adjustmentActive)
+        }
+        guard active else { return }
+        UNUserNotificationCenter.current().getPendingNotificationRequests { [log] requests in
+            let identifiers = Set(PromptNotification.allIdentifiers)
+            guard requests.contains(where: { identifiers.contains($0.identifier) }) else { return }
+            PromptNotification.cancelAll()
+            log.info(.exercise, "Temp target or override is active; re-alerts stopped")
+        }
+    }
+
     /// "Not now" on the notification.
     func snooze() {
         let until = Date().addingTimeInterval(Self.notNowSnooze)
@@ -223,28 +259,7 @@ final class ExerciseHeartRateMonitor {
     }
 
     static func makeNotificationCategory() -> UNNotificationCategory {
-        UNNotificationCategory(
-            identifier: PromptNotification.category,
-            actions: [
-                UNNotificationAction(
-                    identifier: PromptNotification.tempTargetAction,
-                    title: String(localized: "Temp Target", comment: "Exercise prompt action that opens temp targets"),
-                    options: [.foreground]
-                ),
-                UNNotificationAction(
-                    identifier: PromptNotification.overrideAction,
-                    title: String(localized: "Override", comment: "Exercise prompt action that opens overrides"),
-                    options: [.foreground]
-                ),
-                UNNotificationAction(
-                    identifier: PromptNotification.notNowAction,
-                    title: String(localized: "Not now", comment: "Exercise prompt action that snoozes the prompt"),
-                    options: []
-                )
-            ],
-            intentIdentifiers: [],
-            options: []
-        )
+        PromptNotification.makeCategory()
     }
 
     // MARK: - Check
@@ -268,6 +283,11 @@ final class ExerciseHeartRateMonitor {
            now.timeIntervalSince(lastPrompt) < Self.promptCooldown
         {
             record(ExerciseCheckRecord(date: now, reason: reason, outcome: .skippedCooldown))
+            return
+        }
+        if defaults.bool(forKey: DefaultsKey.adjustmentActive) {
+            defaults.removeObject(forKey: DefaultsKey.sustainedSince)
+            record(ExerciseCheckRecord(date: now, reason: reason, outcome: .skippedAdjustmentActive))
             return
         }
 
@@ -306,7 +326,7 @@ final class ExerciseHeartRateMonitor {
         record(ExerciseCheckRecord(date: now, reason: reason, outcome: outcome, evaluation: result, motion: motion))
 
         guard result.shouldRemind, !config.logOnly else { return }
-        await postPrompt()
+        await postPrompt(config: config, at: now)
     }
 
     struct Reading {
@@ -491,43 +511,46 @@ final class ExerciseHeartRateMonitor {
 
     // MARK: - Notification
 
-    private func postPrompt() async {
-        let content = UNMutableNotificationContent()
-        content.title = String(localized: "Are you exercising?", comment: "Exercise prompt title")
-        content.body = String(
+    private func postPrompt(config: Config, at date: Date) async {
+        let body = String(
             localized: "Your heart rate has been up for a while. Set a temp target or override?",
             comment: "Exercise prompt body"
         )
-        content.sound = .default
-        content.categoryIdentifier = PromptNotification.category
-
-        let request = UNNotificationRequest(
-            identifier: PromptNotification.requestIdentifier,
-            content: content,
-            trigger: nil
-        )
         do {
-            try await UNUserNotificationCenter.current().add(request)
-            log.info(.exercise, "Asked \"Are you exercising?\"")
+            try await PromptNotification.post(
+                body: body,
+                postedAt: date,
+                repeatMinutes: config.repeatMinutes,
+                repeatCount: config.repeatCount
+            )
+            log.info(
+                .exercise,
+                "Asked \"Are you exercising?\"" + (config.repeatMinutes > 0
+                    ? "; re-alerting every \(Int(config.repeatMinutes)) min up to \(config.repeatCount) times until acknowledged"
+                    : "")
+            )
         } catch {
             log.error(.exercise, "Could not post the exercise prompt", error: error)
         }
 
-        sendPromptToPhone(body: content.body)
+        sendPromptToPhone(body: body, postedAt: date)
     }
 
     /// A notification the watch app posts only ever shows on the watch, so ask Trio on the
     /// iPhone to post the same prompt there. `transferUserInfo` is queued and delivered even
     /// when the iPhone app is in the background. The iPhone uses the same identifier, so a
     /// copy forwarded back to the watch replaces this one instead of showing twice.
-    private func sendPromptToPhone(body: String) {
+    private func sendPromptToPhone(body: String, postedAt: Date) {
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         guard session.activationState == .activated else {
             log.warning(.exercise, "Could not send the prompt to iPhone: connection not active")
             return
         }
-        session.transferUserInfo([WatchMessageKeys.exercisePrompt: body])
+        session.transferUserInfo([
+            WatchMessageKeys.exercisePrompt: body,
+            WatchMessageKeys.exercisePromptDate: postedAt.timeIntervalSince1970
+        ])
         log.info(.exercise, "Sent the prompt to iPhone")
     }
 
@@ -601,6 +624,7 @@ struct ExerciseCheckRecord: Codable, Identifiable {
         case notSustained
         case skippedSnoozed
         case skippedCooldown
+        case skippedAdjustmentActive
         case readFailed
 
         var label: String {
@@ -611,6 +635,10 @@ struct ExerciseCheckRecord: Codable, Identifiable {
             case .notSustained: return String(localized: "Not exercising", comment: "Exercise check outcome")
             case .skippedSnoozed: return String(localized: "Skipped: snoozed", comment: "Exercise check outcome")
             case .skippedCooldown: return String(localized: "Skipped: reminded recently", comment: "Exercise check outcome")
+            case .skippedAdjustmentActive: return String(
+                    localized: "Skipped: temp target or override on",
+                    comment: "Exercise check outcome"
+                )
             case .readFailed: return String(localized: "Couldn't read heart rate", comment: "Exercise check outcome")
             }
         }
@@ -638,8 +666,8 @@ struct ExerciseCheckRecord: Codable, Identifiable {
     }
 }
 
-private extension Double {
-    func clamped(to range: ClosedRange<Double>) -> Double {
+private extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self {
         Swift.min(Swift.max(self, range.lowerBound), range.upperBound)
     }
 }

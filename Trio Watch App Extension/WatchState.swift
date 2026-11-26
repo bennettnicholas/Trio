@@ -325,6 +325,11 @@ import WatchConnectivity
 
     func session(_: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
         if WatchLogger.shared.handlePhoneMessage(userInfo) { return }
+        // The exercise reminder was acknowledged on the iPhone: stop the watch's re-alerts
+        if let action = userInfo[WatchMessageKeys.exercisePromptAcknowledged] as? String {
+            ExerciseHeartRateMonitor.shared.acknowledge(action: action, fromPhone: true)
+            return
+        }
         handleIncomingWatchStatePayload(userInfo)
     }
 
@@ -579,6 +584,10 @@ import WatchConnectivity
 
         WatchLogger.shared.debug(.data, "Watch state applied")
 
+        // A running temp target or override means the user already acted on exercise
+        ExerciseHeartRateMonitor.shared.setAdjustmentActive(
+            tempTargetPresets.contains(where: \.isEnabled) || overridePresets.contains(where: \.isEnabled)
+        )
         // Uses the background wake this update brought to check heart rate (opt-in)
         ExerciseHeartRateMonitor.shared.phoneUpdateArrived(appIsActive: isAppActive)
     }
@@ -690,7 +699,9 @@ import WatchConnectivity
 
         ExerciseHeartRateMonitor.shared.setConfig(
             exerciseBPM: (message[WatchMessageKeys.exercisePromptHeartRate] as? NSNumber)?.doubleValue,
-            logOnly: message[WatchMessageKeys.exercisePromptLogOnly] as? Bool
+            logOnly: message[WatchMessageKeys.exercisePromptLogOnly] as? Bool,
+            repeatMinutes: (message[WatchMessageKeys.exercisePromptRepeatMinutes] as? NSNumber)?.doubleValue,
+            repeatCount: (message[WatchMessageKeys.exercisePromptRepeatCount] as? NSNumber)?.intValue
         )
 
         if let exercisePromptEnabled = message[WatchMessageKeys.exercisePromptEnabled] as? Bool {

@@ -72,6 +72,9 @@ struct NotificationsView: BaseView {
 
                     Text("Day & Night Windows")
                         .navigationLink(to: .alarmWindows, from: self)
+
+                    Text("Exercise Reminder")
+                        .navigationLink(to: .exerciseReminder, from: self)
                 }
             ).listRowBackground(Color.chart)
 

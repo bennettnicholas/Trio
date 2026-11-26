@@ -64,10 +64,12 @@ final class WatchNotificationHandler: NSObject, UNUserNotificationCenterDelegate
     /// Tapping the prompt opens temp targets; the actions open temp targets or overrides,
     /// or snooze the prompt. Nothing is applied until the user picks a preset.
     private func handleExercisePrompt(actionIdentifier: String) {
+        // Any response (tap, action, swipe away) acknowledges it and stops the re-alerts
+        ExerciseHeartRateMonitor.shared.acknowledge(action: actionIdentifier, fromPhone: false)
+
         let destination: ExercisePromptDestination?
         switch actionIdentifier {
         case ExerciseHeartRateMonitor.PromptNotification.notNowAction:
-            ExerciseHeartRateMonitor.shared.snooze()
             destination = nil
         case ExerciseHeartRateMonitor.PromptNotification.overrideAction:
             destination = .override

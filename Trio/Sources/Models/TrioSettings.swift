@@ -62,6 +62,12 @@ struct TrioSettings: JSON, Equatable, Encodable {
     var exercisePromptHeartRate: Decimal = 105
     /// Test mode: the watch records its checks but never sends the reminder
     var exercisePromptLogOnly: Bool = false
+    /// Repeat the exercise reminder until the user taps, dismisses or snoozes it
+    var exercisePromptRepeat: Bool = true
+    /// Minutes between repeats of the exercise reminder
+    var exercisePromptRepeatMinutes: Decimal = 10
+    /// How many times the exercise reminder repeats at most
+    var exercisePromptRepeatCount: Decimal = 2
     var showForecastWatch: Bool = false
     var overrideFactor: Decimal = 0.8
     var fattyMeals: Bool = false
@@ -332,6 +338,18 @@ extension TrioSettings: Decodable {
 
         if let exercisePromptLogOnly = try? container.decode(Bool.self, forKey: .exercisePromptLogOnly) {
             settings.exercisePromptLogOnly = exercisePromptLogOnly
+        }
+
+        if let exercisePromptRepeat = try? container.decode(Bool.self, forKey: .exercisePromptRepeat) {
+            settings.exercisePromptRepeat = exercisePromptRepeat
+        }
+
+        if let exercisePromptRepeatMinutes = try? container.decode(Decimal.self, forKey: .exercisePromptRepeatMinutes) {
+            settings.exercisePromptRepeatMinutes = exercisePromptRepeatMinutes
+        }
+
+        if let exercisePromptRepeatCount = try? container.decode(Decimal.self, forKey: .exercisePromptRepeatCount) {
+            settings.exercisePromptRepeatCount = exercisePromptRepeatCount
         }
 
         if let showForecastWatch = try? container.decode(Bool.self, forKey: .showForecastWatch) {

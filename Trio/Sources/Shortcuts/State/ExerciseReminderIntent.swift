@@ -32,22 +32,18 @@ import UserNotifications
             return .result()
         }
 
-        let content = UNMutableNotificationContent()
-        content.title = String(localized: "Are you exercising?", comment: "Exercise prompt title")
-        content.body = String(
+        let body = String(
             localized: "Your workout has started. Set a temp target or override?",
             comment: "Exercise prompt body when a workout starts"
         )
-        content.sound = .default
-
-        // Same identifier as the watch's prompt, so the two never stack up
-        let request = UNNotificationRequest(
-            identifier: WatchMessageKeys.exercisePromptNotificationID,
-            content: content,
-            trigger: nil
-        )
         do {
-            try await UNUserNotificationCenter.current().add(request)
+            // Same identifiers and re-alerts as the watch's reminder, so the two never stack up
+            try await ExerciseReminderNotifications.post(
+                body: body,
+                postedAt: Date(),
+                repeatMinutes: settings.exercisePromptRepeat ? NSDecimalNumber(decimal: settings.exercisePromptRepeatMinutes).doubleValue : 0,
+                repeatCount: NSDecimalNumber(decimal: settings.exercisePromptRepeatCount).intValue
+            )
             info(.watch, "Workout reminder from Shortcuts shown")
         } catch {
             warning(.watch, "Could not show the workout reminder from Shortcuts", error: error)

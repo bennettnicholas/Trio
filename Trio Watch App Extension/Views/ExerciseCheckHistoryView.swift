@@ -94,6 +94,7 @@ private extension ExerciseCheckRecord.Outcome {
         case .sustainedWaiting: return .orange
         case .readFailed: return .red
         case .notSustained,
+             .skippedAdjustmentActive,
              .skippedCooldown,
              .skippedSnoozed: return .primary
         }
