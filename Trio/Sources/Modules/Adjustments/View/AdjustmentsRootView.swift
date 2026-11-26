@@ -40,6 +40,18 @@ extension Adjustments {
 
         var body: some View {
             tempTargetDeleteConfirmation(overrideDeleteConfirmation(mainContent))
+                // Opened from the exercise reminder: show the page the user picked
+                .onChange(of: navigationRequest.requestID, initial: true) { _, requestID in
+                    openRequestedTab(requestID)
+                }
+        }
+
+        /// Kept out of `mainContent`, whose long modifier chain is already near the limit of
+        /// what the Swift compiler can type-check
+        private func openRequestedTab(_ requestID: Int) {
+            guard requestID > navigationRequest.handledByAdjustments else { return }
+            navigationRequest.handledByAdjustments = requestID
+            state.selectedTab = navigationRequest.tab
         }
 
         private var mainContent: some View {
@@ -77,12 +89,6 @@ extension Adjustments {
                 .scrollContentBackground(.hidden)
                 .background(appState.trioBackgroundColor(for: colorScheme))
                 .onAppear(perform: configureView)
-                // Opened from the exercise reminder: show the page the user picked
-                .onChange(of: navigationRequest.requestID, initial: true) { _, requestID in
-                    guard requestID > navigationRequest.handledByAdjustments else { return }
-                    navigationRequest.handledByAdjustments = requestID
-                    state.selectedTab = navigationRequest.tab
-                }
                 .navigationBarTitle("Adjustments")
                 .navigationBarTitleDisplayMode(.large)
                 .toolbar {
