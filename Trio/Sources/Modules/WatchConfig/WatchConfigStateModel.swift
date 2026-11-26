@@ -11,8 +11,8 @@ extension WatchConfig {
         @Published var confirmBolusFaster = false
         @Published var showForecastWatch = false
         @Published var exercisePromptWatch = false
-        @Published var exercisePromptThreshold: Decimal = 100
-        @Published var exercisePromptMinutes: Decimal = 10
+        @Published var exercisePromptHeartRate: Decimal = 105
+        @Published var exercisePromptLogOnly = false
 
         /// Garmin watch settings containing all watch-related configuration
         @Published var garminSettings = GarminWatchSettings()
@@ -28,8 +28,8 @@ extension WatchConfig {
             subscribeSetting(\.confirmBolusFaster, on: $confirmBolusFaster) { confirmBolusFaster = $0 }
             subscribeSetting(\.showForecastWatch, on: $showForecastWatch) { showForecastWatch = $0 }
             subscribeSetting(\.exercisePromptWatch, on: $exercisePromptWatch) { exercisePromptWatch = $0 }
-            subscribeSetting(\.exercisePromptThreshold, on: $exercisePromptThreshold) { exercisePromptThreshold = $0 }
-            subscribeSetting(\.exercisePromptMinutes, on: $exercisePromptMinutes) { exercisePromptMinutes = $0 }
+            subscribeSetting(\.exercisePromptHeartRate, on: $exercisePromptHeartRate) { exercisePromptHeartRate = $0 }
+            subscribeSetting(\.exercisePromptLogOnly, on: $exercisePromptLogOnly) { exercisePromptLogOnly = $0 }
 
             devices = garmin.devices
         }

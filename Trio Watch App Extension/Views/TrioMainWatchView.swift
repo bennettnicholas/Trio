@@ -104,6 +104,12 @@ struct TrioMainWatchView: View {
                 // Page 3: Alarm snooze
                 AlarmSnoozeView(state: state)
                     .tag(2)
+
+                // Page 4: Exercise check history, only while Ask When Exercising is on
+                if state.exercisePromptEnabled {
+                    ExerciseCheckHistoryView()
+                        .tag(3)
+                }
             }
             .onAppear {
                 /// Hard reset variables when main view appears
@@ -113,7 +119,12 @@ struct TrioMainWatchView: View {
             }
             .background(trioBackgroundColor)
             .tabViewStyle(.verticalPage)
-            .digitalCrownRotation($currentPage.doubleBinding(), from: 0, through: 2, by: 1)
+            .digitalCrownRotation(
+                $currentPage.doubleBinding(),
+                from: 0,
+                through: state.exercisePromptEnabled ? 3 : 2,
+                by: 1
+            )
             .onChange(of: state.trend) { _, newTrend in
                 withAnimation {
                     updateRotation(for: newTrend)

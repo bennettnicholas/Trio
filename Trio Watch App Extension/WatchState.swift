@@ -33,6 +33,8 @@ import WatchConnectivity
     var snoozeUntilDate: Date = .distantPast
     /// Set when the user taps the "Are you exercising?" prompt; the main view opens that sheet
     var exercisePromptDestination: ExercisePromptDestination?
+    /// Shows the Exercise Checks page while Ask When Exercising is on
+    var exercisePromptEnabled = ExerciseHeartRateMonitor.shared.isEnabled
 
     /// treatments inputs
     /// used to store carbs for combined meal-bolus-treatments
@@ -687,12 +689,13 @@ import WatchConnectivity
         }
 
         ExerciseHeartRateMonitor.shared.setConfig(
-            thresholdBPM: (message[WatchMessageKeys.exercisePromptThreshold] as? NSNumber)?.doubleValue,
-            minutes: (message[WatchMessageKeys.exercisePromptMinutes] as? NSNumber)?.doubleValue
+            exerciseBPM: (message[WatchMessageKeys.exercisePromptHeartRate] as? NSNumber)?.doubleValue,
+            logOnly: message[WatchMessageKeys.exercisePromptLogOnly] as? Bool
         )
 
         if let exercisePromptEnabled = message[WatchMessageKeys.exercisePromptEnabled] as? Bool {
             ExerciseHeartRateMonitor.shared.setEnabled(exercisePromptEnabled, appIsActive: isAppActive)
+            self.exercisePromptEnabled = exercisePromptEnabled
         }
 
         if let showForecast = message[WatchMessageKeys.showForecastWatch] as? Bool {

@@ -52,8 +52,8 @@ enum WatchMessageKeys {
     static let bolusIncrement = "bolusIncrement"
     static let confirmBolusFaster = "confirmBolusFaster"
     static let exercisePromptEnabled = "exercisePromptEnabled"
-    static let exercisePromptThreshold = "exercisePromptThreshold"
-    static let exercisePromptMinutes = "exercisePromptMinutes"
+    static let exercisePromptHeartRate = "exercisePromptHeartRate"
+    static let exercisePromptLogOnly = "exercisePromptLogOnly"
     /// Watch → iPhone: the watch asked "Are you exercising?"; value is the body text
     static let exercisePrompt = "exercisePrompt"
     /// Shared by the watch and iPhone notifications, so the watch shows the prompt only once

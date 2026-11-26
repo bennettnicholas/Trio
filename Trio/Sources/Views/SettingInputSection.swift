@@ -114,10 +114,8 @@ struct SettingInputSection<VerboseHint: View>: View {
             return pickerSettingsProvider.settings.maxProtein
         case "overrideFactor":
             return pickerSettingsProvider.settings.overrideFactor
-        case "exercisePromptThreshold":
-            return pickerSettingsProvider.settings.exercisePromptThreshold
-        case "exercisePromptMinutes":
-            return pickerSettingsProvider.settings.exercisePromptMinutes
+        case "exercisePromptHeartRate":
+            return pickerSettingsProvider.settings.exercisePromptHeartRate
         case "fattyMealFactor":
             return pickerSettingsProvider.settings.fattyMealFactor
         case "sweetMealFactor":

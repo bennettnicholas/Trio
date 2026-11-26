@@ -58,10 +58,10 @@ struct TrioSettings: JSON, Equatable, Encodable {
     var confirmBolusFaster: Bool = false
     /// Off by default: the Apple Watch only reads heart rate once the user turns this on
     var exercisePromptWatch: Bool = false
-    /// Heart rate (bpm) that counts as elevated for the watch exercise prompt
-    var exercisePromptThreshold: Decimal = 100
-    /// How many minutes heart rate has to stay elevated before the watch asks
-    var exercisePromptMinutes: Decimal = 10
+    /// The user's average heart rate (bpm) while exercising; a brisk walk is about 100–110
+    var exercisePromptHeartRate: Decimal = 105
+    /// Test mode: the watch records its checks but never sends the reminder
+    var exercisePromptLogOnly: Bool = false
     var showForecastWatch: Bool = false
     var overrideFactor: Decimal = 0.8
     var fattyMeals: Bool = false
@@ -326,12 +326,12 @@ extension TrioSettings: Decodable {
             settings.exercisePromptWatch = exercisePromptWatch
         }
 
-        if let exercisePromptThreshold = try? container.decode(Decimal.self, forKey: .exercisePromptThreshold) {
-            settings.exercisePromptThreshold = exercisePromptThreshold
+        if let exercisePromptHeartRate = try? container.decode(Decimal.self, forKey: .exercisePromptHeartRate) {
+            settings.exercisePromptHeartRate = exercisePromptHeartRate
         }
 
-        if let exercisePromptMinutes = try? container.decode(Decimal.self, forKey: .exercisePromptMinutes) {
-            settings.exercisePromptMinutes = exercisePromptMinutes
+        if let exercisePromptLogOnly = try? container.decode(Bool.self, forKey: .exercisePromptLogOnly) {
+            settings.exercisePromptLogOnly = exercisePromptLogOnly
         }
 
         if let showForecastWatch = try? container.decode(Bool.self, forKey: .showForecastWatch) {
