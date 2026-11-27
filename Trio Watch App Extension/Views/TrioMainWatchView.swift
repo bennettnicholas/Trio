@@ -105,11 +105,10 @@ struct TrioMainWatchView: View {
                 AlarmSnoozeView(state: state)
                     .tag(2)
 
-                // Page 4: Exercise check history, only while Ask to Temp Target When Exercise Detected is on
-                if state.exercisePromptEnabled {
-                    ExerciseCheckHistoryView()
-                        .tag(3)
-                }
+                // Page 4: Exercise check history. Always present, so the pages never change
+                // shape while the app runs; it says when the setting is off.
+                ExerciseCheckHistoryView(isEnabled: state.exercisePromptEnabled)
+                    .tag(3)
             }
             .onAppear {
                 /// Hard reset variables when main view appears
@@ -122,7 +121,7 @@ struct TrioMainWatchView: View {
             .digitalCrownRotation(
                 $currentPage.doubleBinding(),
                 from: 0,
-                through: state.exercisePromptEnabled ? 3 : 2,
+                through: 3,
                 by: 1
             )
             .onChange(of: state.trend) { _, newTrend in

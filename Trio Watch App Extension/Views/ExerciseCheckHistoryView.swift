@@ -1,53 +1,54 @@
 import SwiftUI
 
-/// Last page of the watch app while Ask to Temp Target When Exercise Detected is on: every recent exercise check,
-/// newest first, so detection can be tested and tuned right on the wrist.
+/// Last page of the watch app: the latest exercise check, with every recent check one tap away,
+/// so detection can be tested and tuned right on the wrist.
 struct ExerciseCheckHistoryView: View {
+    let isEnabled: Bool
+
     @State private var records: [ExerciseCheckRecord] = []
     @State private var showingAllChecks = false
 
     var body: some View {
-        // A page in the main vertical TabView can't hold its own scrolling List: the pages and
-        // the List both want the swipe and the Digital Crown. Like the alarm snooze page, this
-        // page shows a summary and opens the full list in a sheet.
-        TimelineView(.periodic(from: .now, by: 30)) { context in
-            VStack(spacing: 6) {
-                Button {
-                    showingAllChecks = true
-                } label: {
-                    Image(systemName: "figure.run")
-                        .font(.title2)
-                        .frame(width: 80, height: 80)
-                        .overlay(Circle().stroke(Color.primary.opacity(0.4), lineWidth: 2))
-                }
-                .buttonStyle(.plain)
+        // Kept as plain as the alarm snooze page: no scrolling list or timer inside the main
+        // vertical pages, which both drive the Digital Crown. The full list opens in a sheet.
+        VStack(spacing: 6) {
+            Button {
+                records = ExerciseHeartRateMonitor.shared.history
+                showingAllChecks = true
+            } label: {
+                Image(systemName: "figure.run")
+                    .font(.title2)
+                    .frame(width: 80, height: 80)
+                    .overlay(Circle().stroke(Color.primary.opacity(0.4), lineWidth: 2))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("Exercise Checks"))
 
-                if let latest = records.first {
-                    Text(latest.outcome.label)
-                        .font(.footnote).bold()
-                        .foregroundStyle(latest.outcome.color)
-                        .multilineTextAlignment(.center)
-                    Text(
-                        "\(latest.date.formatted(date: .omitted, time: .shortened)) · \(records.count) checks"
-                    )
+            if !isEnabled {
+                Text("Exercise reminder is off")
+                    .font(.footnote).bold()
+                Text("Turn it on in Trio on iPhone")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                } else {
-                    Text("Exercise Checks")
-                        .font(.footnote).bold()
-                    Text("None yet")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .onChange(of: context.date, initial: true) {
-                records = ExerciseHeartRateMonitor.shared.history
+            } else if let latest = records.first {
+                Text(latest.outcome.label)
+                    .font(.footnote).bold()
+                    .foregroundStyle(latest.outcome.color)
+                    .multilineTextAlignment(.center)
+                Text("\(latest.date.formatted(date: .omitted, time: .shortened)) · \(records.count) checks")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Exercise Checks")
+                    .font(.footnote).bold()
+                Text("None yet")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityAction { showingAllChecks = true }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Reload each time the page comes into view
+        .onAppear { records = ExerciseHeartRateMonitor.shared.history }
         .sheet(isPresented: $showingAllChecks) {
             ExerciseCheckListView(records: $records)
         }
