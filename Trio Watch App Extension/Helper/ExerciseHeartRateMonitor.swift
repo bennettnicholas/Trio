@@ -644,7 +644,9 @@ struct ExerciseCheckRecord: Codable, Identifiable {
         }
     }
 
-    var id: Date { date }
+    /// Two checks can land in the same instant (an iPhone update while the app opens), so the
+    /// date alone isn't unique enough for SwiftUI lists
+    var id: String { "\(date.timeIntervalSince1970)-\(reason.rawValue)-\(outcome.rawValue)" }
     let date: Date
     let reason: ExerciseHeartRateMonitor.CheckReason
     let outcome: Outcome
