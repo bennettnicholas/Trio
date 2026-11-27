@@ -46,6 +46,9 @@ struct DecimalPickerSettings {
     var maxCarbs = PickerSetting(value: 250, step: 5, min: 0, max: 300, type: PickerSetting.PickerSettingType.gram)
     var maxFat = PickerSetting(value: 250, step: 5, min: 0, max: 300, type: PickerSetting.PickerSettingType.gram)
     var maxProtein = PickerSetting(value: 250, step: 5, min: 0, max: 300, type: PickerSetting.PickerSettingType.gram)
+    var exercisePromptHeartRate = PickerSetting(value: 105, step: 5, min: 80, max: 180, type: PickerSetting.PickerSettingType.bpm)
+    var exercisePromptRepeatMinutes = PickerSetting(value: 10, step: 5, min: 5, max: 30, type: PickerSetting.PickerSettingType.minute)
+    var exercisePromptRepeatCount = PickerSetting(value: 2, step: 1, min: 1, max: 5, type: PickerSetting.PickerSettingType.times)
     var overrideFactor = PickerSetting(value: 0.8, step: 0.05, min: 0.05, max: 1.5, type: PickerSetting.PickerSettingType.factor)
     var fattyMealFactor = PickerSetting(value: 0.7, step: 0.05, min: 0.05, max: 1, type: PickerSetting.PickerSettingType.factor)
     var sweetMealFactor = PickerSetting(value: 1, step: 0.05, min: 0.05, max: 2, type: PickerSetting.PickerSettingType.factor)
@@ -158,5 +161,7 @@ struct PickerSetting {
         case insulinUnitPerHour
         case minute
         case hour
+        case bpm
+        case times
     }
 }

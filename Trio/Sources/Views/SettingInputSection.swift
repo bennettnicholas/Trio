@@ -114,6 +114,12 @@ struct SettingInputSection<VerboseHint: View>: View {
             return pickerSettingsProvider.settings.maxProtein
         case "overrideFactor":
             return pickerSettingsProvider.settings.overrideFactor
+        case "exercisePromptHeartRate":
+            return pickerSettingsProvider.settings.exercisePromptHeartRate
+        case "exercisePromptRepeatMinutes":
+            return pickerSettingsProvider.settings.exercisePromptRepeatMinutes
+        case "exercisePromptRepeatCount":
+            return pickerSettingsProvider.settings.exercisePromptRepeatCount
         case "fattyMealFactor":
             return pickerSettingsProvider.settings.fattyMealFactor
         case "sweetMealFactor":
@@ -243,6 +249,10 @@ struct SettingInputSection<VerboseHint: View>: View {
             return "\(decimalValue) \(String(localized: "min", comment: "Minutes abbreviation"))"
         case .hour:
             return "\(decimalValue) \(String(localized: "hr", comment: "Hours abbreviation"))"
+        case .bpm:
+            return "\(decimalValue) \(String(localized: "bpm", comment: "Beats per minute abbreviation"))"
+        case .times:
+            return "\(decimalValue)×"
         }
     }
 
@@ -263,6 +273,10 @@ struct SettingInputSection<VerboseHint: View>: View {
             return "\(decimalValue) \(UnitSpelling.spoken("min"))"
         case .hour:
             return "\(decimalValue) \(UnitSpelling.spoken("hr"))"
+        case .bpm:
+            return "\(decimalValue) \(String(localized: "beats per minute", comment: "Accessibility: spoken unit"))"
+        case .times:
+            return "\(decimalValue) \(String(localized: "times", comment: "Accessibility: spoken count"))"
         }
     }
 

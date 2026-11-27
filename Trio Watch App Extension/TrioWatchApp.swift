@@ -14,6 +14,10 @@ import UserNotifications
         WindowGroup {
             TrioMainWatchView()
         }
+        // Heart rate check, about 4 times an hour while a Trio complication is on the watch face
+        .backgroundTask(.appRefresh(ExerciseHeartRateMonitor.refreshIdentifier)) {
+            await ExerciseHeartRateMonitor.shared.handleBackgroundRefresh()
+        }
         .onChange(of: scenePhase) { _, newScenePhase in
             WatchState.shared.setAppActive(newScenePhase == .active)
             if newScenePhase == .background {
@@ -21,6 +25,7 @@ import UserNotifications
                 WatchLogger.shared.didEnterBackground()
             } else if newScenePhase == .active {
                 WatchState.shared.refreshIfNeeded()
+                ExerciseHeartRateMonitor.shared.appDidBecomeActive()
             }
         }
     }

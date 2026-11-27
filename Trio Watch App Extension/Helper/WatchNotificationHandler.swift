@@ -21,6 +21,7 @@ final class WatchNotificationHandler: NSObject, UNUserNotificationCenterDelegate
 
             var categories = existingCategories
             categories.update(with: glucoseCategory)
+            categories.update(with: ExerciseHeartRateMonitor.makeNotificationCategory())
             // UNUserNotificationCenter methods should be called on main thread
             Task { @MainActor in
                 center.setNotificationCategories(categories)
@@ -37,8 +38,53 @@ final class WatchNotificationHandler: NSObject, UNUserNotificationCenterDelegate
     ) {
         defer { completionHandler() }
 
+        if response.notification.request.content.categoryIdentifier == ExerciseHeartRateMonitor.PromptNotification.category {
+            handleExercisePrompt(actionIdentifier: response.actionIdentifier)
+            return
+        }
+
         guard let action = NotificationResponseAction(rawValue: response.actionIdentifier) else { return }
         sendSnoozeRequest(minutes: action.minutes)
+    }
+
+    /// Shows the exercise prompt as a banner when it fires while the app is open
+    /// (the check runs every time the app opens). Other notifications keep their current behavior.
+    func userNotificationCenter(
+        _: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        if notification.request.content.categoryIdentifier == ExerciseHeartRateMonitor.PromptNotification.category {
+            completionHandler([.banner, .sound])
+        } else {
+            completionHandler([])
+        }
+    }
+
+    /// Tapping the prompt opens temp targets; the actions open temp targets or overrides,
+    /// or snooze the prompt. Nothing is applied until the user picks a preset.
+    private func handleExercisePrompt(actionIdentifier: String) {
+        // Any response (tap, action, swipe away) acknowledges it and stops the re-alerts
+        ExerciseHeartRateMonitor.shared.acknowledge(action: actionIdentifier, fromPhone: false)
+
+        let destination: ExercisePromptDestination?
+        switch actionIdentifier {
+        case ExerciseHeartRateMonitor.PromptNotification.notNowAction:
+            destination = nil
+        case ExerciseHeartRateMonitor.PromptNotification.overrideAction:
+            destination = .override
+        case ExerciseHeartRateMonitor.PromptNotification.tempTargetAction,
+             UNNotificationDefaultActionIdentifier:
+            destination = .tempTarget
+        default:
+            destination = nil
+        }
+
+        guard let destination else { return }
+        WatchLogger.shared.info(.exercise, "Prompt opened \(destination == .override ? "overrides" : "temp targets")")
+        Task { @MainActor in
+            WatchState.shared.exercisePromptDestination = destination
+        }
     }
 
     /// Sends snooze request to iPhone via WatchConnectivity.

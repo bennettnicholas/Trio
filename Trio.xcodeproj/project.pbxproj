@@ -816,6 +816,11 @@
 		C2AA6CF72E1A734A00BF6C16 /* SettingsExportProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2AA6CF32E1A734A00BF6C16 /* SettingsExportProvider.swift */; };
 		C2AA6CF82E1A734A00BF6C16 /* SettingsExportDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2AA6CF22E1A734A00BF6C16 /* SettingsExportDataFlow.swift */; };
 		C2AA6CF92E1A734A00BF6C16 /* SettingsExportStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2AA6CF42E1A734A00BF6C16 /* SettingsExportStateModel.swift */; };
+		E7E70C022F80000000A1B2C3 /* ExerciseHeartRateMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E70C012F80000000A1B2C3 /* ExerciseHeartRateMonitor.swift */; };
+		E7E70C092F80000000A1B2C3 /* ExerciseReminderNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E70C082F80000000A1B2C3 /* ExerciseReminderNotifications.swift */; };
+		E7E70C0A2F80000000A1B2C3 /* ExerciseReminderNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E70C082F80000000A1B2C3 /* ExerciseReminderNotifications.swift */; };
+		E7E70C0C2F80000000A1B2C3 /* ExerciseReminderSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E70C0B2F80000000A1B2C3 /* ExerciseReminderSettingsView.swift */; };
+		E7E70C052F80000000A1B2C3 /* ExerciseCheckHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E70C042F80000000A1B2C3 /* ExerciseCheckHistoryView.swift */; };
 		C2BA6B972F758E7500348E6A /* WatchNotificationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BA6B962F758E7500348E6A /* WatchNotificationHandler.swift */; };
 		C2BA6B992F758E7600348E6A /* NotificationIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BA6B982F758E7600348E6A /* NotificationIdentifiers.swift */; };
 		C2BA6B9A2F7593C300348E6A /* NotificationIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BA6B982F758E7600348E6A /* NotificationIdentifiers.swift */; };
@@ -873,6 +878,7 @@
 		CE7CA3532A064973004BE681 /* TempPresetIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7CA3492A064973004BE681 /* TempPresetIntent.swift */; };
 		CE7CA3542A064973004BE681 /* TempPresetsIntentRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7CA34A2A064973004BE681 /* TempPresetsIntentRequest.swift */; };
 		CE7CA3552A064973004BE681 /* ListStateIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7CA34C2A064973004BE681 /* ListStateIntent.swift */; };
+		E7E70C072F80000000A1B2C3 /* ExerciseReminderIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7E70C062F80000000A1B2C3 /* ExerciseReminderIntent.swift */; };
 		CE7CA3562A064973004BE681 /* StateIntentRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7CA34D2A064973004BE681 /* StateIntentRequest.swift */; };
 		CE7CA3582A064E2F004BE681 /* ListStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7CA3572A064E2F004BE681 /* ListStateView.swift */; };
 		CE82E02528E867BA00473A9C /* AlertStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE82E02428E867BA00473A9C /* AlertStorage.swift */; };
@@ -2091,6 +2097,11 @@
 		C2AA6CF22E1A734A00BF6C16 /* SettingsExportDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsExportDataFlow.swift; sourceTree = "<group>"; };
 		C2AA6CF32E1A734A00BF6C16 /* SettingsExportProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsExportProvider.swift; sourceTree = "<group>"; };
 		C2AA6CF42E1A734A00BF6C16 /* SettingsExportStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsExportStateModel.swift; sourceTree = "<group>"; };
+		E7E70C012F80000000A1B2C3 /* ExerciseHeartRateMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseHeartRateMonitor.swift; sourceTree = "<group>"; };
+		E7E70C082F80000000A1B2C3 /* ExerciseReminderNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseReminderNotifications.swift; sourceTree = "<group>"; };
+		E7E70C0B2F80000000A1B2C3 /* ExerciseReminderSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseReminderSettingsView.swift; sourceTree = "<group>"; };
+		E7E70C042F80000000A1B2C3 /* ExerciseCheckHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseCheckHistoryView.swift; sourceTree = "<group>"; };
+		E7E70C032F80000000A1B2C3 /* TrioWatchApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TrioWatchApp.entitlements; sourceTree = "<group>"; };
 		C2BA6B962F758E7500348E6A /* WatchNotificationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchNotificationHandler.swift; sourceTree = "<group>"; };
 		C2BA6B982F758E7600348E6A /* NotificationIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationIdentifiers.swift; sourceTree = "<group>"; };
 		C39FF1EC12CF4B1EBB13BE26 /* NightscoutUploadSerializerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightscoutUploadSerializerTests.swift; sourceTree = "<group>"; };
@@ -2156,6 +2167,7 @@
 		CE7CA3492A064973004BE681 /* TempPresetIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TempPresetIntent.swift; sourceTree = "<group>"; };
 		CE7CA34A2A064973004BE681 /* TempPresetsIntentRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TempPresetsIntentRequest.swift; sourceTree = "<group>"; };
 		CE7CA34C2A064973004BE681 /* ListStateIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ListStateIntent.swift; sourceTree = "<group>"; };
+		E7E70C062F80000000A1B2C3 /* ExerciseReminderIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseReminderIntent.swift; sourceTree = "<group>"; };
 		CE7CA34D2A064973004BE681 /* StateIntentRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StateIntentRequest.swift; sourceTree = "<group>"; };
 		CE7CA3572A064E2F004BE681 /* ListStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListStateView.swift; sourceTree = "<group>"; };
 		CE82E02428E867BA00473A9C /* AlertStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertStorage.swift; sourceTree = "<group>"; };
@@ -3496,6 +3508,7 @@
 				3811DE8E25C9D80400A708ED /* User.swift */,
 				DD3078672D42F5CE00DE0490 /* WatchGlucoseObject.swift */,
 				BD432CA02D2F4E3300D1EB79 /* WatchMessageKeys.swift */,
+				E7E70C082F80000000A1B2C3 /* ExerciseReminderNotifications.swift */,
 				BDA25EFC2D261BF200035F34 /* WatchState.swift */,
 			);
 			path = Models;
@@ -4519,6 +4532,7 @@
 				BD54A9582D27FB6A00F9C1EE /* OverridePresetsView.swift */,
 				BD54A9702D281A7A00F9C1EE /* TempTargetPresetsView.swift */,
 				A1B2C3D40F00000000000001 /* AlarmSnoozeView.swift */,
+				E7E70C042F80000000A1B2C3 /* ExerciseCheckHistoryView.swift */,
 				DD6F63CB2D27F606007D94CF /* TreatmentMenuView.swift */,
 				BDA25F1B2D26BD0300035F34 /* TrendShape.swift */,
 				BDFF7A842D25F97D0016C40C /* TrioMainWatchView.swift */,
@@ -4566,6 +4580,7 @@
 				BDFF7A9E2D25FA970016C40C /* Preview Content */,
 				BDFF7A832D25F97D0016C40C /* Assets.xcassets */,
 				BDFF7A852D25F97D0016C40C /* TrioWatchApp.swift */,
+				E7E70C032F80000000A1B2C3 /* TrioWatchApp.entitlements */,
 			);
 			path = "Trio Watch App Extension";
 			sourceTree = "<group>";
@@ -4658,6 +4673,7 @@
 			isa = PBXGroup;
 			children = (
 				CE7CA34C2A064973004BE681 /* ListStateIntent.swift */,
+				E7E70C062F80000000A1B2C3 /* ExerciseReminderIntent.swift */,
 				CE7CA34D2A064973004BE681 /* StateIntentRequest.swift */,
 				CE7CA3572A064E2F004BE681 /* ListStateView.swift */,
 			);
@@ -4681,6 +4697,7 @@
 				4984D1D32EA2939E00263E83 /* WatchConfigGarminAppConfigView.swift */,
 				CE94598629E9E4110047C9C6 /* WatchConfigRootView.swift */,
 				DDF847E72C5DABA30049BB3B /* WatchConfigAppleWatchView.swift */,
+				E7E70C0B2F80000000A1B2C3 /* ExerciseReminderSettingsView.swift */,
 				DDF847E92C5DABAC0049BB3B /* WatchConfigGarminView.swift */,
 			);
 			path = View;
@@ -4951,6 +4968,7 @@
 				DD3A3CE82D29C97800AE478E /* Helper+ButtonStyles.swift */,
 				DD3A3CE62D29C93F00AE478E /* Helper+Extensions.swift */,
 				C2BA6B962F758E7500348E6A /* WatchNotificationHandler.swift */,
+				E7E70C012F80000000A1B2C3 /* ExerciseHeartRateMonitor.swift */,
 			);
 			path = Helper;
 			sourceTree = "<group>";
@@ -5967,6 +5985,7 @@
 				DD3F1F8D2D9E0E0600DCE7B3 /* NightscoutSetupStepView.swift in Sources */,
 				F90692CF274B999A0037068D /* HealthKitDataFlow.swift in Sources */,
 				CE7CA3552A064973004BE681 /* ListStateIntent.swift in Sources */,
+				E7E70C072F80000000A1B2C3 /* ExerciseReminderIntent.swift in Sources */,
 				C28DD7262DBA9A9E00EC02DD /* GlucosePercentileDetailView.swift in Sources */,
 				DD906BF42EA6AA0100262772 /* NightscoutUploadPipeline.swift in Sources */,
 				B63C9D934FC54853BC4EF29A /* NightscoutUploadSerializer.swift in Sources */,
@@ -6011,6 +6030,7 @@
 				DD9E6DA72D5A695500514CEC /* MealTotal.swift in Sources */,
 				5A2325542BFCBF66003518CA /* NightscoutFetchView.swift in Sources */,
 				DDF847E82C5DABA30049BB3B /* WatchConfigAppleWatchView.swift in Sources */,
+				E7E70C0C2F80000000A1B2C3 /* ExerciseReminderSettingsView.swift in Sources */,
 				3811DF1025CAAAE200A708ED /* APSManager.swift in Sources */,
 				3870FF4725EC187A0088248F /* BloodGlucose.swift in Sources */,
 				C1A0DE000000000000000000 /* BloodGlucose+LoopKit.swift in Sources */,
@@ -6169,6 +6189,7 @@
 				DD6D67E42C9C253500660C9B /* ColorSchemeOption.swift in Sources */,
 				582DF9752C8CDB92001F516D /* GlucoseChartView.swift in Sources */,
 				BD432CA12D2F4E3600D1EB79 /* WatchMessageKeys.swift in Sources */,
+				E7E70C092F80000000A1B2C3 /* ExerciseReminderNotifications.swift in Sources */,
 				DD4C581F2D73C43D001BFF2C /* LoopStatsView.swift in Sources */,
 				58A3D53A2C96D4DE003F90FC /* AddTempTargetForm.swift in Sources */,
 				C21FE1E72DA59C6B007D550B /* GlucoseDailyDistributionChart.swift in Sources */,
@@ -6892,6 +6913,8 @@
 				BDA25F1C2D26BD0700035F34 /* TrendShape.swift in Sources */,
 				BDFF7A892D25F97D0016C40C /* TrioWatchApp.swift in Sources */,
 				C2BA6B972F758E7500348E6A /* WatchNotificationHandler.swift in Sources */,
+				E7E70C022F80000000A1B2C3 /* ExerciseHeartRateMonitor.swift in Sources */,
+				E7E70C052F80000000A1B2C3 /* ExerciseCheckHistoryView.swift in Sources */,
 				DD09D5C72D29EB2F000D82C9 /* Helper+Enums.swift in Sources */,
 				BD54A9742D281AEF00F9C1EE /* TempTargetPresetWatch.swift in Sources */,
 				BD54A95C2D2808A300F9C1EE /* OverridePresetWatch.swift in Sources */,
@@ -6901,6 +6924,7 @@
 				DD3A3CE72D29C93F00AE478E /* Helper+Extensions.swift in Sources */,
 				DD246F062D2836AA0027DDE0 /* GlucoseTrendView.swift in Sources */,
 				BD432CA22D2F4E4000D1EB79 /* WatchMessageKeys.swift in Sources */,
+				E7E70C0A2F80000000A1B2C3 /* ExerciseReminderNotifications.swift in Sources */,
 				C2BA6B9A2F7593C300348E6A /* NotificationIdentifiers.swift in Sources */,
 				DD8262CB2D289297009F6F62 /* BolusConfirmationView.swift in Sources */,
 				BD54A9712D281A8100F9C1EE /* TempTargetPresetsView.swift in Sources */,
@@ -7365,6 +7389,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = "Trio Watch App Extension/TrioWatchApp.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -7375,6 +7400,8 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Trio reads your recent heart rate on Apple Watch to remind you to set a temp target when you are exercising.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Trio reads your recent steps and motion on Apple Watch to confirm you are exercising before reminding you.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(BUNDLE_IDENTIFIER)";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -7402,6 +7429,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = "Trio Watch App Extension/TrioWatchApp.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -7412,6 +7440,8 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "$(APP_DISPLAY_NAME)";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Trio reads your recent heart rate on Apple Watch to remind you to set a temp target when you are exercising.";
+				INFOPLIST_KEY_NSMotionUsageDescription = "Trio reads your recent steps and motion on Apple Watch to confirm you are exercising before reminding you.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "$(BUNDLE_IDENTIFIER)";
 				LD_RUNPATH_SEARCH_PATHS = (

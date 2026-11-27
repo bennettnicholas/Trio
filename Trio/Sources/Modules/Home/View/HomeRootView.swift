@@ -26,6 +26,9 @@ extension Home {
         @State var showTreatments = false
         @State var selectedTab: Int = 0
         static let treatmentTabTag = 4
+        /// Tag of the Adjustments tab in both tab bar layouts
+        static let adjustmentsTabTag = 2
+        @State private var adjustmentsNavigation = AdjustmentsNavigationRequest.shared
         @State var showQuickPickTreatmentsPicker = false
         @State var showQuickPickTreatmentsNoHistory = false
         @State var showPumpSelection: Bool = false
@@ -600,6 +603,13 @@ extension Home {
         var body: some View {
             ZStack(alignment: .center) {
                 tabBar()
+                    // The exercise reminder asked for temp targets or overrides: switch to
+                    // Adjustments, which then opens the right page
+                    .onChange(of: adjustmentsNavigation.requestID, initial: true) { _, requestID in
+                        guard requestID > adjustmentsNavigation.handledByHome else { return }
+                        adjustmentsNavigation.handledByHome = requestID
+                        selectedTab = RootView.adjustmentsTabTag
+                    }
 
                 if state.waitForSuggestion {
                     CustomProgressView(text: String(localized: "Updating IOB...", comment: "Progress text when updating IOB"))

@@ -51,6 +51,22 @@ enum WatchMessageKeys {
     static let maxProtein = "maxProtein"
     static let bolusIncrement = "bolusIncrement"
     static let confirmBolusFaster = "confirmBolusFaster"
+    static let exercisePromptEnabled = "exercisePromptEnabled"
+    static let exercisePromptHeartRate = "exercisePromptHeartRate"
+    static let exercisePromptLogOnly = "exercisePromptLogOnly"
+    /// Minutes between repeats of the exercise reminder; 0 means don't repeat
+    static let exercisePromptRepeatMinutes = "exercisePromptRepeatMinutes"
+    static let exercisePromptRepeatCount = "exercisePromptRepeatCount"
+    /// Watch ↔ iPhone: the user tapped, dismissed or snoozed the exercise reminder on that
+    /// device, so the other one cancels its repeats
+    static let exercisePromptAcknowledged = "exercisePromptAcknowledged"
+    /// Watch → iPhone, alongside `exercisePrompt`: when the watch posted it, so both devices
+    /// repeat at the same moments
+    static let exercisePromptDate = "exercisePromptDate"
+    /// Watch → iPhone: the watch asked "Are you exercising?"; value is the body text
+    static let exercisePrompt = "exercisePrompt"
+    /// Shared by the watch and iPhone notifications, so the watch shows the prompt only once
+    static let exercisePromptNotificationID = "Trio.exercisePrompt"
 
     // Notification Actions
     static let snoozeDuration = "snoozeDuration"

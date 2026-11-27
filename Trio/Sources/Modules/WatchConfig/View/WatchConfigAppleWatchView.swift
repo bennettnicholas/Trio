@@ -65,6 +65,18 @@ struct WatchConfigAppleWatchView: BaseView {
             )
 
             Section(
+                header: Text("Exercise Reminder"),
+                footer: Text("Also in Settings → Notifications."),
+                content: {
+                    // A plain NavigationLink: this page is pushed with one too, and the router's
+                    // link (used on the Notifications page) pushed onto the wrong stack from here
+                    NavigationLink("Exercise Reminder") {
+                        WatchConfig.ExerciseReminderRootView(resolver: resolver)
+                    }
+                }
+            ).listRowBackground(Color.chart)
+
+            Section(
                 header: Text("Contact Image"),
                 content: {
                     VStack {

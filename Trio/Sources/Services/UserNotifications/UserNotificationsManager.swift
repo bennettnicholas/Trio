@@ -5,6 +5,7 @@ import LoopKit
 import SwiftUI
 import Swinject
 import UserNotifications
+import WatchConnectivity
 
 protocol UserNotificationsManager {
     func getNotificationSettings(completionHandler: @escaping (UNNotificationSettings) -> Void)
@@ -68,6 +69,7 @@ final class BaseUserNotificationsManager: NSObject, UserNotificationsManager, In
 
             var categories = existingCategories
             categories.update(with: glucoseCategory)
+            categories.update(with: ExerciseReminderNotifications.makeCategory())
             // UNUserNotificationCenter methods should be called on main thread
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -220,6 +222,12 @@ extension BaseUserNotificationsManager: UNUserNotificationCenterDelegate {
             completionHandler([.badge, .sound, .list])
             return
         }
+        // The exercise reminder shows as a banner while Trio is open, so it can be tapped
+        // straight into temp targets or overrides
+        if notification.request.content.categoryIdentifier == ExerciseReminderNotifications.category {
+            completionHandler([.banner, .sound, .list])
+            return
+        }
         completionHandler([.banner, .badge, .sound, .list])
     }
 
@@ -235,6 +243,28 @@ extension BaseUserNotificationsManager: UNUserNotificationCenterDelegate {
         let userInfo = response.notification.request.content.userInfo
         if userInfo[AlertUserInfoKey.managerIdentifier.rawValue] is String {
             trioAlertManager.handleNotificationResponse(response)
+            return
+        }
+
+        // Exercise reminder: any response (tap, action, swipe away) stops the re-alerts here
+        // and on the watch. "Not now" also snoozes the watch's checks.
+        if response.notification.request.content.categoryIdentifier == ExerciseReminderNotifications.category {
+            ExerciseReminderNotifications.cancelAll()
+            info(.watch, "Exercise reminder acknowledged on iPhone (\(response.actionIdentifier))")
+            if WCSession.isSupported(), WCSession.default.activationState == .activated {
+                WCSession.default.transferUserInfo([WatchMessageKeys.exercisePromptAcknowledged: response.actionIdentifier])
+            }
+            // Open the page the user picked. Nothing is applied until they choose a preset.
+            let tab: Adjustments.Tab?
+            switch response.actionIdentifier {
+            case ExerciseReminderNotifications.overrideAction: tab = .overrides
+            case ExerciseReminderNotifications.tempTargetAction,
+                 UNNotificationDefaultActionIdentifier: tab = .tempTargets
+            default: tab = nil
+            }
+            if let tab {
+                Task { @MainActor in AdjustmentsNavigationRequest.shared.open(tab) }
+            }
             return
         }
 

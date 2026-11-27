@@ -392,6 +392,19 @@ enum SettingItems {
             path: ["Notifications", "Day & Night Windows"]
         ),
         SettingItem(
+            title: "Exercise Reminder",
+            view: .exerciseReminder,
+            searchContents: [
+                "Ask to Temp Target When Exercise Detected",
+                "Exercise Heart Rate",
+                "Re-Alert If Not Acknowledged",
+                "Re-Alert Every",
+                "Re-Alert Up To",
+                "Log Only (Testing)"
+            ],
+            path: ["Notifications", "Exercise Reminder"]
+        ),
+        SettingItem(
             title: "Live Activity",
             view: .liveActivitySettings,
             searchContents: [

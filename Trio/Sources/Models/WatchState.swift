@@ -26,6 +26,11 @@ struct WatchState: Hashable, Equatable, Sendable, Encodable, Decodable {
     // Pump specific dosing increment
     var bolusIncrement: Decimal = 0.05
     var confirmBolusFaster: Bool = false
+    var exercisePromptEnabled: Bool = false
+    var exercisePromptHeartRate: Decimal = 105
+    var exercisePromptLogOnly: Bool = false
+    var exercisePromptRepeatMinutes: Decimal = 10
+    var exercisePromptRepeatCount: Decimal = 2
 
     // Forecast options
     var showForecast: Bool = false
@@ -60,6 +65,11 @@ struct WatchState: Hashable, Equatable, Sendable, Encodable, Decodable {
             lhs.maxProtein == rhs.maxProtein &&
             lhs.bolusIncrement == rhs.bolusIncrement &&
             lhs.confirmBolusFaster == rhs.confirmBolusFaster &&
+            lhs.exercisePromptEnabled == rhs.exercisePromptEnabled &&
+            lhs.exercisePromptHeartRate == rhs.exercisePromptHeartRate &&
+            lhs.exercisePromptLogOnly == rhs.exercisePromptLogOnly &&
+            lhs.exercisePromptRepeatMinutes == rhs.exercisePromptRepeatMinutes &&
+            lhs.exercisePromptRepeatCount == rhs.exercisePromptRepeatCount &&
             lhs.showForecast == rhs.showForecast &&
             lhs.isForecastCone == rhs.isForecastCone &&
             lhs.forecastStartDate == rhs.forecastStartDate &&
@@ -93,6 +103,11 @@ struct WatchState: Hashable, Equatable, Sendable, Encodable, Decodable {
         hasher.combine(maxProtein)
         hasher.combine(bolusIncrement)
         hasher.combine(confirmBolusFaster)
+        hasher.combine(exercisePromptEnabled)
+        hasher.combine(exercisePromptHeartRate)
+        hasher.combine(exercisePromptLogOnly)
+        hasher.combine(exercisePromptRepeatMinutes)
+        hasher.combine(exercisePromptRepeatCount)
         hasher.combine(showForecast)
         hasher.combine(isForecastCone)
         hasher.combine(forecastStartDate)

@@ -10,6 +10,12 @@ extension WatchConfig {
         @Published var devices: [IQDevice] = []
         @Published var confirmBolusFaster = false
         @Published var showForecastWatch = false
+        @Published var exercisePromptWatch = false
+        @Published var exercisePromptHeartRate: Decimal = 105
+        @Published var exercisePromptLogOnly = false
+        @Published var exercisePromptRepeat = true
+        @Published var exercisePromptRepeatMinutes: Decimal = 10
+        @Published var exercisePromptRepeatCount: Decimal = 2
 
         /// Garmin watch settings containing all watch-related configuration
         @Published var garminSettings = GarminWatchSettings()
@@ -24,6 +30,14 @@ extension WatchConfig {
             subscribeSetting(\.garminSettings, on: $garminSettings) { garminSettings = $0 }
             subscribeSetting(\.confirmBolusFaster, on: $confirmBolusFaster) { confirmBolusFaster = $0 }
             subscribeSetting(\.showForecastWatch, on: $showForecastWatch) { showForecastWatch = $0 }
+            subscribeSetting(\.exercisePromptWatch, on: $exercisePromptWatch) { exercisePromptWatch = $0 }
+            subscribeSetting(\.exercisePromptHeartRate, on: $exercisePromptHeartRate) { exercisePromptHeartRate = $0 }
+            subscribeSetting(\.exercisePromptLogOnly, on: $exercisePromptLogOnly) { exercisePromptLogOnly = $0 }
+            subscribeSetting(\.exercisePromptRepeat, on: $exercisePromptRepeat) { exercisePromptRepeat = $0 }
+            subscribeSetting(\.exercisePromptRepeatMinutes, on: $exercisePromptRepeatMinutes) {
+                exercisePromptRepeatMinutes = $0
+            }
+            subscribeSetting(\.exercisePromptRepeatCount, on: $exercisePromptRepeatCount) { exercisePromptRepeatCount = $0 }
 
             devices = garmin.devices
         }

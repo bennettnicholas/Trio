@@ -3,6 +3,7 @@ import CoreData
 import Foundation
 import Swinject
 import UIKit
+import UserNotifications
 import WatchConnectivity
 
 /// Protocol defining the base functionality for Watch communication
@@ -343,6 +344,13 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
                 watchState.maxProtein = self.settingsManager.settings.maxProtein
                 watchState.bolusIncrement = self.settingsManager.preferences.bolusIncrement
                 watchState.confirmBolusFaster = self.settingsManager.settings.confirmBolusFaster
+                watchState.exercisePromptEnabled = self.settingsManager.settings.exercisePromptWatch
+                watchState.exercisePromptHeartRate = self.settingsManager.settings.exercisePromptHeartRate
+                watchState.exercisePromptLogOnly = self.settingsManager.settings.exercisePromptLogOnly
+                watchState.exercisePromptRepeatMinutes = self.settingsManager.settings.exercisePromptRepeat
+                    ? self.settingsManager.settings.exercisePromptRepeatMinutes
+                    : 0
+                watchState.exercisePromptRepeatCount = self.settingsManager.settings.exercisePromptRepeatCount
 
                 watchState.showForecast = self.settingsManager.settings.showForecastWatch
                 watchState.isForecastCone = self.settingsManager.settings.forecastDisplayType == .cone
@@ -526,6 +534,11 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
             WatchMessageKeys.maxProtein: state.maxProtein,
             WatchMessageKeys.bolusIncrement: state.bolusIncrement,
             WatchMessageKeys.confirmBolusFaster: state.confirmBolusFaster,
+            WatchMessageKeys.exercisePromptEnabled: state.exercisePromptEnabled,
+            WatchMessageKeys.exercisePromptHeartRate: state.exercisePromptHeartRate,
+            WatchMessageKeys.exercisePromptLogOnly: state.exercisePromptLogOnly,
+            WatchMessageKeys.exercisePromptRepeatMinutes: state.exercisePromptRepeatMinutes,
+            WatchMessageKeys.exercisePromptRepeatCount: state.exercisePromptRepeatCount,
             WatchMessageKeys.units: state.units.rawValue,
             WatchMessageKeys.showForecastWatch: state.showForecast,
             WatchMessageKeys.isForecastCone: state.isForecastCone,
@@ -551,6 +564,14 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
     /// Sends the state of type WatchState to the connected Watch
     /// - Parameter state: Current WatchState containing glucose data to be sent
     @MainActor func sendDataToWatch(_ state: WatchState) async {
+        // A temp target or override is running, so the user acted on the exercise reminder:
+        // stop its re-alerts on the iPhone (the watch does the same when this state arrives)
+        if state.tempTargetPresets.contains(where: \.isEnabled) || state.overridePresets.contains(where: \.isEnabled) {
+            UNUserNotificationCenter.current().removePendingNotificationRequests(
+                withIdentifiers: ExerciseReminderNotifications.allIdentifiers
+            )
+        }
+
         guard let session = session, let payload = buildWatchStatePayload(state) else { return }
         updateApplicationContext(with: payload)
 
@@ -807,6 +828,19 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
             WatchLogIngest.legacyRecords(from: logs).forEach(TrioLogger.sink.accept)
         }
 
+        if let exercisePromptBody = userInfo[WatchMessageKeys.exercisePrompt] as? String {
+            let postedAt = (userInfo[WatchMessageKeys.exercisePromptDate] as? TimeInterval)
+                .map(Date.init(timeIntervalSince1970:)) ?? Date()
+            Task { @MainActor [weak self] in
+                await self?.postExercisePrompt(body: exercisePromptBody, postedAt: postedAt)
+            }
+        }
+
+        if let action = userInfo[WatchMessageKeys.exercisePromptAcknowledged] as? String {
+            ExerciseReminderNotifications.cancelAll()
+            info(.watch, "Exercise reminder acknowledged on watch (\(action)); iPhone re-alerts stopped")
+        }
+
         if let snoozeMinutes = userInfo[WatchMessageKeys.snoozeDuration] as? Int {
             info(.watch, "Watch requested alert snooze for \(snoozeMinutes) min")
             Task { @MainActor [weak self] in
@@ -836,6 +870,29 @@ final class BaseWatchManager: NSObject, WCSessionDelegate, Injectable, WatchMana
         // Try to reconnect after a short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
             self?.retryConnection()
+        }
+    }
+
+    /// Shows the watch's "Are you exercising?" prompt on the iPhone too, with the same
+    /// re-alerts at the same moments. Uses the watch's identifiers, so when the iPhone forwards
+    /// it to the watch, the watch replaces its own copy instead of showing it twice.
+    @MainActor private func postExercisePrompt(body: String, postedAt: Date) async {
+        let settings = settingsManager.settings
+        guard settings.exercisePromptWatch else {
+            debug(.watch, "Ignored exercise prompt from watch: Ask to Temp Target When Exercise Detected is off")
+            return
+        }
+
+        do {
+            try await ExerciseReminderNotifications.post(
+                body: body,
+                postedAt: postedAt,
+                repeatMinutes: settings.exercisePromptRepeat ? NSDecimalNumber(decimal: settings.exercisePromptRepeatMinutes).doubleValue : 0,
+                repeatCount: NSDecimalNumber(decimal: settings.exercisePromptRepeatCount).intValue
+            )
+            info(.watch, "Showed the watch's exercise prompt on iPhone")
+        } catch {
+            warning(.watch, "Could not show the exercise prompt on iPhone", error: error)
         }
     }
 

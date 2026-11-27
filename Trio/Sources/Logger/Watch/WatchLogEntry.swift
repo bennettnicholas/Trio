@@ -15,6 +15,7 @@ struct WatchLogEntry: Codable, Sendable, Equatable {
         case bolus
         case treatments
         case lifecycle
+        case exercise
 
         var name: String {
             rawValue.prefix(1).uppercased() + rawValue.dropFirst()
